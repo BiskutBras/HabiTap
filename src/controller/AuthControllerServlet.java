@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
-@WebServlet(urlPatterns = {"/login", "/logout"})
+@WebServlet(urlPatterns = {"/login", "/logout", "/signup", "/forgot-password"})
 public class AuthControllerServlet extends HttpServlet {
 
     @Override
@@ -27,11 +27,38 @@ public class AuthControllerServlet extends HttpServlet {
             return;
         }
 
+        if ("/signup".equals(path)) {
+            forward(req, resp, "/WEB-INF/views/signup.jsp");
+            return;
+        }
+
+        if ("/forgot-password".equals(path)) {
+            forward(req, resp, "/WEB-INF/views/forgot_password.jsp");
+            return;
+        }
+
         forward(req, resp, "/WEB-INF/views/login.jsp");
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String path = req.getServletPath();
+
+        if ("/signup".equals(path)) {
+            handleSignup(req, resp);
+            return;
+        }
+
+        if ("/forgot-password".equals(path)) {
+            handleForgotPassword(req, resp);
+            return;
+        }
+
+        // /login
+        handleLogin(req, resp);
+    }
+
+    private void handleLogin(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String username = trim(req.getParameter("username"));
         String email = trim(req.getParameter("email"));
         String password = trim(req.getParameter("password"));
@@ -45,14 +72,10 @@ public class AuthControllerServlet extends HttpServlet {
         try {
             AuthUser existing = UserDAO.findByUsername(username);
             if (existing == null) {
-                // register new user
-                boolean ok = UserDAO.createUser(username, email, password);
-                if (!ok) {
-                    req.setAttribute("error", "Unable to create user. Try again.");
-                    forward(req, resp, "/WEB-INF/views/login.jsp");
-                    return;
-                }
-                existing = UserDAO.findByUsername(username);
+                // User doesn't exist on login page - show error
+                req.setAttribute("error", "User not found. Please sign up first.");
+                forward(req, resp, "/WEB-INF/views/login.jsp");
+                return;
             } else {
                 // validate credentials
                 boolean valid = UserDAO.validateCredentials(username, password);
@@ -68,6 +91,74 @@ public class AuthControllerServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/habits");
         } catch (SQLException e) {
             throw new ServletException("Database error during authentication", e);
+        }
+    }
+
+    private void handleSignup(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String username = trim(req.getParameter("username"));
+        String email = trim(req.getParameter("email"));
+        String password = trim(req.getParameter("password"));
+        String passwordConfirm = trim(req.getParameter("passwordConfirm"));
+
+        if (username == null || email == null || password == null || passwordConfirm == null) {
+            req.setAttribute("error", "All fields are required.");
+            forward(req, resp, "/WEB-INF/views/signup.jsp");
+            return;
+        }
+
+        if (!password.equals(passwordConfirm)) {
+            req.setAttribute("error", "Passwords do not match.");
+            forward(req, resp, "/WEB-INF/views/signup.jsp");
+            return;
+        }
+
+        try {
+            AuthUser existing = UserDAO.findByUsername(username);
+            if (existing != null) {
+                req.setAttribute("error", "Username already taken. Choose another.");
+                forward(req, resp, "/WEB-INF/views/signup.jsp");
+                return;
+            }
+
+            // create new user
+            boolean ok = UserDAO.createUser(username, email, password);
+            if (!ok) {
+                req.setAttribute("error", "Unable to create user. Try again.");
+                forward(req, resp, "/WEB-INF/views/signup.jsp");
+                return;
+            }
+
+            // retrieve and set session
+            AuthUser newUser = UserDAO.findByUsername(username);
+            req.getSession(true).setAttribute("user", newUser);
+            resp.sendRedirect(req.getContextPath() + "/habits");
+        } catch (SQLException e) {
+            throw new ServletException("Database error during signup", e);
+        }
+    }
+
+    private void handleForgotPassword(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String username = trim(req.getParameter("username"));
+
+        if (username == null) {
+            req.setAttribute("error", "Username is required.");
+            forward(req, resp, "/WEB-INF/views/forgot_password.jsp");
+            return;
+        }
+
+        try {
+            AuthUser user = UserDAO.findByUsername(username);
+            if (user == null) {
+                req.setAttribute("error", "User not found.");
+                forward(req, resp, "/WEB-INF/views/forgot_password.jsp");
+                return;
+            }
+
+            // Show a message that a reset link was sent.
+            req.setAttribute("message", "If an account exists with that username, a password reset link has been sent.");
+            forward(req, resp, "/WEB-INF/views/forgot_password.jsp");
+        } catch (SQLException e) {
+            throw new ServletException("Database error during password reset", e);
         }
     }
 

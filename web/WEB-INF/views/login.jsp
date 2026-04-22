@@ -44,6 +44,17 @@
                 <button class="btn btn-primary" type="submit">Login</button>
             </div>
         </form>
+
+        <div class="footer-actions">
+            <a href="<%=request.getContextPath()%>/forgot-password" class="link">Forgot password?</a>
+        </div>
+
+        <div class="divider">or</div>
+
+        <div class="signup-section">
+            <p class="signup-text">Don't have an account?</p>
+            <a href="<%=request.getContextPath()%>/signup" class="btn btn-secondary">Create new account</a>
+        </div>
     </div>
 </div>
 </body>
