@@ -80,6 +80,7 @@ public class HabitDAO {
         } catch (Exception e) {
             throw new RuntimeException("DB read failed", e);
         }
+        System.out.println(out);
         return out;
     }
 

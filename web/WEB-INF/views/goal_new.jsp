@@ -1,4 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page import="java.time.LocalDate" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -92,6 +94,30 @@
     function addRow() {
         const tpl = document.getElementById('rowTpl');
         const node = tpl.content.cloneNode(true);
+
+        // Set date constraints for the new date input
+        const dateInput = node.querySelector('input[type="date"]');
+        if (dateInput) {
+            const today = new Date();
+
+            const tomorrow = new Date();
+            tomorrow.setDate(today.getDate() + 1);
+
+            const oneYearFromNow = new Date();
+            oneYearFromNow.setFullYear(today.getFullYear() + 1);
+
+            const formatDate = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            dateInput.min = formatDate(today);
+            dateInput.max = formatDate(oneYearFromNow);
+            dateInput.value = formatDate(tomorrow);
+        }
+
         document.getElementById('rows').appendChild(node);
     }
 

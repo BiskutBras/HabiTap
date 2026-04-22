@@ -38,7 +38,15 @@ public class GoalControllerServlet extends HttpServlet {
             return;
         }
 
-        List<Goal> goals = goalService.listGoals();
+        // get userId from session
+        HttpSession session = req.getSession(false);
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        List<Goal> goals = goalService.listGoalsByUser(userId);
         req.setAttribute("goals", goals);
         forward(req, resp, "/WEB-INF/views/goals.jsp");
     }
@@ -129,4 +137,3 @@ public class GoalControllerServlet extends HttpServlet {
         return s.isEmpty() ? null : s;
     }
 }
-
