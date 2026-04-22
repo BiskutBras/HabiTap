@@ -1,0 +1,234 @@
+package controller;
+
+import model.Habit;
+import model.Habit.Priority;
+import service.HabitService;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.LocalDate;
+
+@WebServlet(urlPatterns = {"/habits", "/habits/new", "/habits/complete", "/habits/incomplete", "/habits/edit", "/habits/update", "/habits/delete"})
+public class HabitControllerServlet extends HttpServlet {
+
+    private HabitService habitService;
+
+    @Override
+    public void init() throws ServletException {
+        this.habitService = new HabitService();
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+
+        String path = req.getServletPath();
+
+        if ("/habits/new".equals(path)) {
+            forward(req, resp, "/WEB-INF/views/habit_new.jsp");
+            return;
+        }
+
+        if ("/habits/edit".equals(path)) {
+            handleEdit(req, resp);
+            return;
+        }
+
+        // default: /habits
+        req.setAttribute("habits", habitService.listHabits());
+        forward(req, resp, "/WEB-INF/views/habits.jsp");
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+
+        String path = req.getServletPath();
+
+        // buddy creates new habit
+        if ("/habits/new".equals(path)) {
+            handleCreate(req, resp);
+            return;
+        }
+
+        // buddy sets habit as complete
+        if ("/habits/complete".equals(path)) {
+            handleComplete(req, resp);
+            return;
+        }
+
+        // buddy sets habit as incomplete (optional toggle)
+        if ("/habits/incomplete".equals(path)) {
+            handleIncomplete(req, resp);
+            return;
+        }
+
+        if ("/habits/update".equals(path)) {
+            handleUpdate(req, resp);
+            return;
+        }
+
+        if ("/habits/delete".equals(path)) {
+            handleDelete(req, resp);
+            return;
+        }
+
+        resp.sendError(404);
+    }
+
+    private void handleCreate(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, ServletException {
+
+        String name = trim(req.getParameter("name"));
+        String description = trim(req.getParameter("description"));
+        String dueDateRaw = trim(req.getParameter("dueDate"));   // expected: YYYY-MM-DD
+        String priorityRaw = trim(req.getParameter("priority")); // LOW/MEDIUM/HIGH
+
+        if (name == null || dueDateRaw == null || priorityRaw == null) {
+            req.setAttribute("error", "Name, due date, and priority are required.");
+            forward(req, resp, "/WEB-INF/views/habit_new.jsp");
+            return;
+        }
+
+        LocalDate dueDate;
+        try {
+            dueDate = LocalDate.parse(dueDateRaw);
+        } catch (Exception e) {
+            req.setAttribute("error", "Due date must be YYYY-MM-DD (e.g., 2026-01-31).");
+            forward(req, resp, "/WEB-INF/views/habit_new.jsp");
+            return;
+        }
+
+        Priority priority;
+        try {
+            priority = Priority.valueOf(priorityRaw.toUpperCase());
+        } catch (Exception e) {
+            req.setAttribute("error", "Priority must be LOW, MEDIUM, or HIGH.");
+            forward(req, resp, "/WEB-INF/views/habit_new.jsp");
+            return;
+        }
+
+        habitService.createHabit(name, description == null ? "" : description, dueDate, priority);
+        resp.sendRedirect(req.getContextPath() + "/habits");
+    }
+
+    private void handleComplete(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+
+        int id = parseIdOrBadRequest(req, resp);
+        if (id == -1) return;
+
+        habitService.markComplete(id);
+        resp.sendRedirect(req.getContextPath() + "/habits");
+    }
+
+    private void handleIncomplete(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+
+        int id = parseIdOrBadRequest(req, resp);
+        if (id == -1) return;
+
+        habitService.markIncomplete(id);
+        resp.sendRedirect(req.getContextPath() + "/habits");
+    }
+
+    private void handleEdit(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        int id = parseIdOrBadRequest(req, resp);
+        if (id == -1) return;
+
+        Habit h = habitService.findHabitById(id);
+        if (h == null) {
+            resp.sendError(404, "Habit not found.");
+            return;
+        }
+
+        req.setAttribute("habit", h);
+        forward(req, resp, "/WEB-INF/views/habit_edit.jsp");
+    }
+
+    private void handleUpdate(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, ServletException {
+
+        int id = parseIdOrBadRequest(req, resp);
+        if (id == -1) return;
+
+        String name = trim(req.getParameter("name"));
+        String description = trim(req.getParameter("description"));
+        String dueDateRaw = trim(req.getParameter("dueDate"));   // expected: YYYY-MM-DD
+        String priorityRaw = trim(req.getParameter("priority")); // LOW/MEDIUM/HIGH
+
+        if (name == null || dueDateRaw == null || priorityRaw == null) {
+            req.setAttribute("error", "Name, due date, and priority are required.");
+            // re-populate habit for the form
+            Habit existing = habitService.findHabitById(id);
+            req.setAttribute("habit", existing);
+            forward(req, resp, "/WEB-INF/views/habit_edit.jsp");
+            return;
+        }
+
+        LocalDate dueDate;
+        try {
+            dueDate = LocalDate.parse(dueDateRaw);
+        } catch (Exception e) {
+            req.setAttribute("error", "Due date must be YYYY-MM-DD (e.g., 2026-01-31).");
+            Habit existing = habitService.findHabitById(id);
+            req.setAttribute("habit", existing);
+            forward(req, resp, "/WEB-INF/views/habit_edit.jsp");
+            return;
+        }
+
+        Priority priority;
+        try {
+            priority = Priority.valueOf(priorityRaw.toUpperCase());
+        } catch (Exception e) {
+            req.setAttribute("error", "Priority must be LOW, MEDIUM, or HIGH.");
+            Habit existing = habitService.findHabitById(id);
+            req.setAttribute("habit", existing);
+            forward(req, resp, "/WEB-INF/views/habit_edit.jsp");
+            return;
+        }
+
+        habitService.updateHabit(id, name, description == null ? "" : description, dueDate, priority);
+        resp.sendRedirect(req.getContextPath() + "/habits");
+    }
+
+    private void handleDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        int id = parseIdOrBadRequest(req, resp);
+        if (id == -1) return;
+
+        habitService.deleteHabit(id);
+        resp.sendRedirect(req.getContextPath() + "/habits");
+    }
+
+    private int parseIdOrBadRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String idRaw = trim(req.getParameter("id"));
+        int id;
+
+        try {
+            id = Integer.parseInt(idRaw);
+        } catch (Exception e) {
+            resp.sendError(400, "Invalid id.");
+            return -1;
+        }
+        return id;
+    }
+
+    private void forward(HttpServletRequest req, HttpServletResponse resp, String view)
+            throws ServletException, IOException {
+        RequestDispatcher rd = req.getRequestDispatcher(view);
+        rd.forward(req, resp);
+    }
+
+    // helper method
+    private String trim(String s) {
+        if (s == null) return null;
+        s = s.trim();
+        return s.isEmpty() ? null : s;
+    }
+}

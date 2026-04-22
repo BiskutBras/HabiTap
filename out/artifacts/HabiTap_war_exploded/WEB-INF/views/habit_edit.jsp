@@ -1,0 +1,80 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page isELIgnored="true" %>
+<%@ page import="model.Habit" %>
+
+<%
+    Habit habit = (Habit) request.getAttribute("habit");
+    if (habit == null) {
+        response.sendError(404);
+        return;
+    }
+    String error = (String) request.getAttribute("error");
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="<%=request.getContextPath()%>/css/habit_edit_style.css">
+    <title>Edit Habit</title>
+
+
+</head>
+
+<body>
+<div class="wrap">
+
+    <div class="header">
+        <div class="title">Edit Habit</div>
+        <div class="subtitle">Update habit details and save changes</div>
+    </div>
+
+    <div class="card">
+
+        <%
+            if (error != null) {
+        %>
+        <div class="error"><%= error %></div>
+        <%
+            }
+        %>
+
+        <form method="post" action="<%=request.getContextPath()%>/habits/update">
+            <input type="hidden" name="id" value="<%=habit.getId()%>"/>
+
+            <div class="row">
+                <label for="name">Habit Name</label>
+                <input id="name" name="name" type="text" required maxlength="50"
+                       value="<%=habit.getName()%>"/>
+            </div>
+
+            <div class="row">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="4" maxlength="500"><%=habit.getDescription()%></textarea>
+            </div>
+
+            <div class="row">
+                <label for="dueDate">Due Date</label>
+                <input id="dueDate" name="dueDate" type="date" required
+                       value="<%=habit.getDueDate()%>"/>
+            </div>
+
+            <div class="row">
+                <label for="priority">Priority</label>
+                <select id="priority" name="priority" required>
+                    <option value="LOW" <%= habit.getPriority() != null && habit.getPriority().name().equals("LOW") ? "selected" : "" %>>Low</option>
+                    <option value="MEDIUM" <%= habit.getPriority() != null && habit.getPriority().name().equals("MEDIUM") ? "selected" : "" %>>Medium</option>
+                    <option value="HIGH" <%= habit.getPriority() != null && habit.getPriority().name().equals("HIGH") ? "selected" : "" %>>High</option>
+                </select>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a class="btn btn-secondary" href="<%=request.getContextPath()%>/habits">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+</body>
+</html>

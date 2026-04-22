@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="HabiTap:war exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/HabiTap_war_exploded</output-path>
+    <root id="root">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="HabiTap" />
+        </element>
+      </element>
+      <element id="javaee-facet-resources" facet="HabiTap/web/Web" />
+    </root>
+  </artifact>
+</component>
