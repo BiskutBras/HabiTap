@@ -68,7 +68,7 @@ public class GoalControllerServlet extends HttpServlet {
             return;
         }
 
-        Goal created = goalService.createGoal(goalName, goalColor);
+        Goal created = goalService.createGoal(goalName, goalColor, userId);
 
         // Subtasks (habits)
         String[] habitNames = req.getParameterValues("habitName");
