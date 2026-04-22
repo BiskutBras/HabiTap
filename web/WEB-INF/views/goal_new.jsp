@@ -41,6 +41,18 @@
                 <label>Color</label>
                 <input type="color" name="goalColor" value="#2563eb" required>
             </div>
+            <div class="row">
+                <label>Due date (optional)</label>
+                <input type="date" name="goalDueDate">
+            </div>
+            <div class="row">
+                <label>Priority</label>
+                <select name="goalPriority">
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM" selected>Medium</option>
+                    <option value="HIGH">High</option>
+                </select>
+            </div>
         </div>
 
         <div class="section">
@@ -91,6 +103,26 @@
 </template>
 
 <script>
+    // Set constraints for goal due date input when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const goalDateInput = document.querySelector('input[name="goalDueDate"]');
+        if (goalDateInput) {
+            const today = new Date();
+            const oneYearFromNow = new Date();
+            oneYearFromNow.setFullYear(today.getFullYear() + 1);
+
+            const formatDate = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            goalDateInput.min = formatDate(today);
+            goalDateInput.max = formatDate(oneYearFromNow);
+        }
+    });
+
     function addRow() {
         const tpl = document.getElementById('rowTpl');
         const node = tpl.content.cloneNode(true);

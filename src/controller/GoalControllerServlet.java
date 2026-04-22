@@ -61,9 +61,33 @@ public class GoalControllerServlet extends HttpServlet {
 
         String goalName = trim(req.getParameter("goalName"));
         String goalColor = trim(req.getParameter("goalColor"));
+        String goalDueDateRaw = trim(req.getParameter("goalDueDate"));
+        String goalPriorityRaw = trim(req.getParameter("goalPriority"));
 
         if (goalName == null || goalColor == null) {
             req.setAttribute("error", "Goal name and color are required.");
+            forward(req, resp, "/WEB-INF/views/goal_new.jsp");
+            return;
+        }
+
+        // Parse goal due date (optional)
+        LocalDate goalDueDate = null;
+        if (goalDueDateRaw != null && !goalDueDateRaw.isEmpty()) {
+            try {
+                goalDueDate = LocalDate.parse(goalDueDateRaw);
+            } catch (Exception e) {
+                req.setAttribute("error", "Goal due date must be a valid date.");
+                forward(req, resp, "/WEB-INF/views/goal_new.jsp");
+                return;
+            }
+        }
+
+        // Parse goal priority
+        Goal.Priority goalPriority;
+        try {
+            goalPriority = Goal.Priority.valueOf(goalPriorityRaw != null ? goalPriorityRaw.toUpperCase() : "MEDIUM");
+        } catch (Exception e) {
+            req.setAttribute("error", "Goal priority must be LOW, MEDIUM, or HIGH.");
             forward(req, resp, "/WEB-INF/views/goal_new.jsp");
             return;
         }
@@ -76,7 +100,7 @@ public class GoalControllerServlet extends HttpServlet {
             return;
         }
 
-        Goal created = goalService.createGoal(goalName, goalColor, userId);
+        Goal created = goalService.createGoal(goalName, goalColor, userId, goalDueDate.atStartOfDay(), goalPriority);
 
         // Subtasks (habits)
         String[] habitNames = req.getParameterValues("habitName");
