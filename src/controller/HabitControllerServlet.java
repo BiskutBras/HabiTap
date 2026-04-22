@@ -11,6 +11,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.time.LocalDate;
 
@@ -43,8 +44,12 @@ public class HabitControllerServlet extends HttpServlet {
             return;
         }
 
+        // get userId stored at login
+        HttpSession session = req.getSession(false);
+        Integer userId = (Integer) session.getAttribute("userId");
+
         // default: /habits
-        req.setAttribute("habits", habitService.listHabits());
+        req.setAttribute("habits", habitService.listHabits(userId));
         forward(req, resp, "/WEB-INF/views/habits.jsp");
     }
 
@@ -121,8 +126,16 @@ public class HabitControllerServlet extends HttpServlet {
             return;
         }
 
-        if (goalId != null) habitService.createHabitForGoal(goalId, name, description == null ? "" : description, dueDate, priority);
-        else habitService.createHabit(name, description == null ? "" : description, dueDate, priority);
+        // get userId from session
+        HttpSession session = req.getSession(false);
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        if (goalId != null) habitService.createHabitForGoal(userId, goalId, name, description == null ? "" : description, dueDate, priority);
+        else habitService.createHabit(userId, name, description == null ? "" : description, dueDate, priority);
         resp.sendRedirect(req.getContextPath() + "/habits");
     }
 

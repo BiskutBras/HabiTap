@@ -86,6 +86,10 @@ public class AuthControllerServlet extends HttpServlet {
                 }
             }
 
+            // store user id at login
+            HttpSession session = req.getSession();
+            session.setAttribute("userId", existing.getId());
+
             // set session user from DB
             req.getSession(true).setAttribute("user", existing);
             resp.sendRedirect(req.getContextPath() + "/habits");
@@ -130,7 +134,9 @@ public class AuthControllerServlet extends HttpServlet {
 
             // retrieve and set session
             AuthUser newUser = UserDAO.findByUsername(username);
-            req.getSession(true).setAttribute("user", newUser);
+            HttpSession session = req.getSession(true);
+            session.setAttribute("userId", newUser.getId());
+            session.setAttribute("user", newUser);
             resp.sendRedirect(req.getContextPath() + "/habits");
         } catch (SQLException e) {
             throw new ServletException("Database error during signup", e);

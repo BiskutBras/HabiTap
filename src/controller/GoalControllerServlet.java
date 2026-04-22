@@ -12,6 +12,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
@@ -59,6 +60,14 @@ public class GoalControllerServlet extends HttpServlet {
             return;
         }
 
+        // get userId from session
+        HttpSession session = req.getSession(false);
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
         Goal created = goalService.createGoal(goalName, goalColor);
 
         // Subtasks (habits)
@@ -101,7 +110,7 @@ public class GoalControllerServlet extends HttpServlet {
                     return;
                 }
 
-                habitService.createHabitForGoal(created.getId(), hName, hDesc == null ? "" : hDesc, dueDate, priority);
+                habitService.createHabitForGoal(userId, created.getId(), hName, hDesc == null ? "" : hDesc, dueDate, priority);
             }
         }
 

@@ -20,10 +20,15 @@ CREATE TABLE IF NOT EXISTS goals (
                                              ON DELETE CASCADE                 -- If a user is deleted, their goals are deleted
 );
 
--- 3) Link habits -> goals (nullable)
--- (This handles your 1-to-Many from Goals to Habits)
+-- 3) Update habits table with user_id and goal_id
+-- (Add user_id for 1-to-Many from Users to Habits)
+-- (Add goal_id for nullable 1-to-Many from Goals to Habits)
 ALTER TABLE habits
+    ADD COLUMN user_id INT NOT NULL DEFAULT 1,
     ADD COLUMN goal_id INT NULL,
+    ADD CONSTRAINT fk_habits_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+            ON DELETE CASCADE,               -- If a user is deleted, their habits are deleted
     ADD CONSTRAINT fk_habits_goal
         FOREIGN KEY (goal_id) REFERENCES goals(id)
             ON DELETE SET NULL;               -- If a goal is deleted, the habit loses the goal but isn't deleted

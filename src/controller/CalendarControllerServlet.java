@@ -12,6 +12,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDate;
@@ -31,7 +32,12 @@ public class CalendarControllerServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.setAttribute("habits", habitService.listHabits());
+
+        // get userId from current session
+        HttpSession session = req.getSession(false);
+        Integer userId = (Integer) session.getAttribute("userId");
+
+        req.setAttribute("habits", habitService.listHabits(userId));
         req.setAttribute("calendarItems", calendarService.listItems());
         forward(req, resp, "/WEB-INF/views/calendar.jsp");
     }
