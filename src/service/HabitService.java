@@ -18,6 +18,13 @@ public class HabitService {
         return h;
     }
 
+    public Habit createHabitForGoal(Integer goalId, String name, String description, LocalDate dueDate, Priority priority) {
+        Habit h = new Habit(0, name, description, dueDate, priority);
+        h.setGoalId(goalId);
+        habitDAO.insert(h);
+        return h;
+    }
+
     public List<Habit> listHabits() {
         return habitDAO.findAll();
     }
@@ -35,8 +42,8 @@ public class HabitService {
         return habitDAO.findById(id);
     }
 
-    public boolean updateHabit(int id, String name, String description, LocalDate dueDate, Priority priority) {
-        return habitDAO.update(id, name, description == null ? "" : description, dueDate, priority);
+    public boolean updateHabit(int id, String name, String description, LocalDate dueDate, Priority priority, Integer goalId) {
+        return habitDAO.update(id, name, description == null ? "" : description, dueDate, priority, goalId);
     }
 
     public boolean deleteHabit(int id) {

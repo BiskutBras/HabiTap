@@ -1,4 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page import="java.util.List" %>
+<%@ page import="model.Goal" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,6 +28,11 @@
             }
         %>
 
+        <%
+            List<Goal> goals = (List<Goal>) request.getAttribute("goals");
+            if (goals == null) goals = java.util.Collections.emptyList();
+        %>
+
         <form method="POST" action="<%=request.getContextPath()%>/habits/new">
             <div class="row">
                 <label>Habit Name</label>
@@ -49,6 +56,16 @@
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
                     <option value="HIGH">High</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <label>Goal (optional)</label>
+                <select name="goalId">
+                    <option value="">-- No Goal --</option>
+                    <% for (Goal g : goals) { %>
+                    <option value="<%=g.getId()%>"><%=g.getName()%></option>
+                    <% } %>
                 </select>
             </div>
 

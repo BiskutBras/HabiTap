@@ -1,6 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page isELIgnored="true" %>
 <%@ page import="model.Habit" %>
+<%@ page import="java.util.List" %>
+<%@ page import="model.Goal" %>
 
 <%
     Habit habit = (Habit) request.getAttribute("habit");
@@ -9,6 +11,8 @@
         return;
     }
     String error = (String) request.getAttribute("error");
+    List<Goal> goals = (List<Goal>) request.getAttribute("goals");
+    if (goals == null) goals = java.util.Collections.emptyList();
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,6 +69,18 @@
                     <option value="LOW" <%= habit.getPriority() != null && habit.getPriority().name().equals("LOW") ? "selected" : "" %>>Low</option>
                     <option value="MEDIUM" <%= habit.getPriority() != null && habit.getPriority().name().equals("MEDIUM") ? "selected" : "" %>>Medium</option>
                     <option value="HIGH" <%= habit.getPriority() != null && habit.getPriority().name().equals("HIGH") ? "selected" : "" %>>High</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <label for="goalId">Goal (optional)</label>
+                <select id="goalId" name="goalId">
+                    <option value="" <%= habit.getGoalId() == null ? "selected" : "" %>>-- No Goal --</option>
+                    <% for (Goal g : goals) { %>
+                    <option value="<%=g.getId()%>" <%= habit.getGoalId() != null && habit.getGoalId().intValue() == g.getId() ? "selected" : "" %>>
+                        <%=g.getName()%>
+                    </option>
+                    <% } %>
                 </select>
             </div>
 

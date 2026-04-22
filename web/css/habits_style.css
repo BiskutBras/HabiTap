@@ -63,6 +63,30 @@ body {
     margin-bottom: 1.5rem;
 }
 
+.header-actions{
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+}
+
+.nav-button{
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: rgba(255,255,255,0.95);
+    padding: 0.45rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor:pointer;
+    transition: transform .15s ease, background .15s ease;
+}
+.nav-button:hover{background: rgba(255, 255, 255, 0.26); transform: translateY(-1px);}
+.nav-button.ghost{
+    background: transparent;
+    border-color: rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.85);
+}
+
 .header-date {
     color: #bfdbfe;
     font-size: 0.875rem;

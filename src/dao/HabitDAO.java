@@ -15,7 +15,7 @@ import java.util.List;
 public class HabitDAO {
 
     public void insert(Habit h) {
-        String sql = "INSERT INTO habits (name, description, due_date, priority, completed) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO habits (name, description, due_date, priority, completed, goal_id) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection con = DB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -25,6 +25,8 @@ public class HabitDAO {
             ps.setDate(3, Date.valueOf(h.getDueDate()));
             ps.setString(4, h.getPriority().name());
             ps.setInt(5, h.isCompleted() ? 1 : 0);
+            if (h.getGoalId() == null) ps.setNull(6, java.sql.Types.INTEGER);
+            else ps.setInt(6, h.getGoalId());
 
             ps.executeUpdate();
         } catch (Exception e) {
@@ -33,7 +35,9 @@ public class HabitDAO {
     }
 
     public List<Habit> findAll() {
-        String sql = "SELECT id, name, description, due_date, priority, completed FROM habits ORDER BY id ASC";
+        String sql = "SELECT h.id, h.name, h.description, h.due_date, h.priority, h.completed, h.goal_id, " +
+                "g.name AS goal_name, g.color AS goal_color " +
+                "FROM habits h LEFT JOIN goals g ON h.goal_id = g.id ORDER BY h.id ASC";
         List<Habit> out = new ArrayList<Habit>();
 
         try (Connection con = DB.getConnection();
@@ -47,9 +51,15 @@ public class HabitDAO {
                 LocalDate dueDate = rs.getDate("due_date").toLocalDate();
                 Priority priority = Priority.valueOf(rs.getString("priority"));
                 boolean completed = rs.getInt("completed") == 1;
+                Integer goalId = (Integer) rs.getObject("goal_id");
+                String goalName = rs.getString("goal_name");
+                String goalColor = rs.getString("goal_color");
 
                 Habit h = new Habit(id, name, desc, dueDate, priority);
                 if (completed) h.markCompleted(); else h.markIncomplete();
+                h.setGoalId(goalId);
+                h.setGoalName(goalName);
+                h.setGoalColor(goalColor);
                 out.add(h);
             }
         } catch (Exception e) {
@@ -74,7 +84,9 @@ public class HabitDAO {
     }
 
     public Habit findById(int id) {
-        String sql = "SELECT id, name, description, due_date, priority, completed FROM habits WHERE id = ?";
+        String sql = "SELECT h.id, h.name, h.description, h.due_date, h.priority, h.completed, h.goal_id, " +
+                "g.name AS goal_name, g.color AS goal_color " +
+                "FROM habits h LEFT JOIN goals g ON h.goal_id = g.id WHERE h.id = ?";
         try (Connection con = DB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -88,9 +100,15 @@ public class HabitDAO {
                 LocalDate dueDate = rs.getDate("due_date").toLocalDate();
                 Priority priority = Priority.valueOf(rs.getString("priority"));
                 boolean completed = rs.getInt("completed") == 1;
+                Integer goalId = (Integer) rs.getObject("goal_id");
+                String goalName = rs.getString("goal_name");
+                String goalColor = rs.getString("goal_color");
 
                 Habit h = new Habit(hid, name, desc, dueDate, priority);
                 if (completed) h.markCompleted(); else h.markIncomplete();
+                h.setGoalId(goalId);
+                h.setGoalName(goalName);
+                h.setGoalColor(goalColor);
                 return h;
             }
         } catch (Exception e) {
@@ -98,8 +116,8 @@ public class HabitDAO {
         }
     }
 
-    public boolean update(int id, String name, String description, LocalDate dueDate, Priority priority) {
-        String sql = "UPDATE habits SET name = ?, description = ?, due_date = ?, priority = ? WHERE id = ?";
+    public boolean update(int id, String name, String description, LocalDate dueDate, Priority priority, Integer goalId) {
+        String sql = "UPDATE habits SET name = ?, description = ?, due_date = ?, priority = ?, goal_id = ? WHERE id = ?";
         try (Connection con = DB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -107,7 +125,9 @@ public class HabitDAO {
             ps.setString(2, description);
             ps.setDate(3, Date.valueOf(dueDate));
             ps.setString(4, priority.name());
-            ps.setInt(5, id);
+            if (goalId == null) ps.setNull(5, java.sql.Types.INTEGER);
+            else ps.setInt(5, goalId);
+            ps.setInt(6, id);
 
             return ps.executeUpdate() == 1;
         } catch (Exception e) {
