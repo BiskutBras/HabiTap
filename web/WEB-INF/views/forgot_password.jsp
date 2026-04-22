@@ -12,7 +12,7 @@
     <div class="card">
         <div class="header">
             <div class="title">Reset password</div>
-            <div class="subtitle">Enter your username to recover your account</div>
+            <div class="subtitle">Enter your email to recover your account</div>
         </div>
 
         <%
@@ -31,8 +31,8 @@
 
         <form method="POST" action="<%=request.getContextPath()%>/forgot-password">
             <div class="row">
-                <label>Username</label>
-                <input type="text" name="username" required maxlength="60" autocomplete="username" placeholder="Enter your username">
+                <label>Email</label>
+                <input type="text" name="email" required maxlength="60" autocomplete="email" placeholder="Enter your email">
             </div>
 
             <div class="actions">

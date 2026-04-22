@@ -14,15 +14,24 @@ public class UserDAO {
 
     public static AuthUser findByUsername(String username) throws SQLException {
         String sql = "SELECT id, username, email FROM users WHERE username = ?";
+        return getAuthUser(username, sql);
+    }
+
+    public static AuthUser findByEmail(String email) throws SQLException {
+        String sql = "SELECT id, username, email FROM users WHERE email = ?";
+        return getAuthUser(email, sql);
+    }
+
+    private static AuthUser getAuthUser(String loginInput, String sql) throws SQLException {
         try (Connection c = DB.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, username);
+             PreparedStatement ps = c.prepareStatement(sql)){
+            ps.setString(1, loginInput);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
+                if(rs.next()){
                     int id = rs.getInt("id");
-                    String uname = rs.getString("username");
+                    String username = rs.getString("username");
                     String email = rs.getString("email");
-                    return new AuthUser(id, uname, email);
+                    return new AuthUser(id, username, email);
                 }
             }
         }
@@ -69,5 +78,7 @@ public class UserDAO {
             throw new RuntimeException("SHA-256 not available", e);
         }
     }
+
+
 }
 

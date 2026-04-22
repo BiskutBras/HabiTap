@@ -138,16 +138,16 @@ public class AuthControllerServlet extends HttpServlet {
     }
 
     private void handleForgotPassword(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String username = trim(req.getParameter("username"));
+        String email = trim(req.getParameter("email"));
 
-        if (username == null) {
-            req.setAttribute("error", "Username is required.");
+        if (email == null) {
+            req.setAttribute("error", "Email is required.");
             forward(req, resp, "/WEB-INF/views/forgot_password.jsp");
             return;
         }
 
         try {
-            AuthUser user = UserDAO.findByUsername(username);
+            AuthUser user = UserDAO.findByEmail(email);
             if (user == null) {
                 req.setAttribute("error", "User not found.");
                 forward(req, resp, "/WEB-INF/views/forgot_password.jsp");
@@ -155,7 +155,7 @@ public class AuthControllerServlet extends HttpServlet {
             }
 
             // Show a message that a reset link was sent.
-            req.setAttribute("message", "If an account exists with that username, a password reset link has been sent.");
+            req.setAttribute("message", "If an account exists with that email, a password reset link has been sent.");
             forward(req, resp, "/WEB-INF/views/forgot_password.jsp");
         } catch (SQLException e) {
             throw new ServletException("Database error during password reset", e);
