@@ -110,7 +110,7 @@
                                 else icon = "🌱";
                             }
                 %>
-                <div class="habit-card" onclick="toggleHabit('<%=h.getId()%>')">
+                <div class="habit-card" onclick="toggleHabit('<%=h.getId()%>', <%=h.isCompleted()%>)">
                     <div class="habit-icon <%= h.isCompleted() ? "completed" : "" %>">
                         <span><%=icon%></span>
                     </div>
@@ -143,12 +143,11 @@
 
 <script>
     // Toggle now calls your SERVLET endpoints, then reloads the page.
-    function toggleHabit(id) {
+    function toggleHabit(id, completed) {
         if (!id) return;
-        // simple POST form submit
-        const endpoint = document.location.pathname.endsWith('/habits') ? 'habits/complete' : 'habits/complete';
-        // We will determine server endpoint by current state via server-side rendering; still use complete endpoint and let server handle id state.
-        const url = '<%=request.getContextPath()%>/habits/complete';
+        // Determine which endpoint to call based on current completion state
+        const endpoint = completed ? 'habits/incomplete' : 'habits/complete';
+        const url = '<%=request.getContextPath()%>/' + endpoint;
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = url;
