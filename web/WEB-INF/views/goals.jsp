@@ -40,7 +40,7 @@
             } else {
                 for (Goal g : goals) {
         %>
-        <div class="card">
+        <div class="card" onclick="location.href='<%=request.getContextPath()%>/goals/<%=g.getId()%>/habits'">
             <div class="color" style="background:<%=g.getColor()%>"></div>
             <div class="card-body">
                 <div class="card-title"><%=g.getName()%></div>

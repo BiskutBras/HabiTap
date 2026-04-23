@@ -49,4 +49,10 @@ public class HabitService {
     public boolean deleteHabit(int id) {
         return habitDAO.deleteById(id);
     }
+
+    public List<Habit> listHabitsByGoal(int userId, int goalId) {
+        return habitDAO.findAll(userId).stream()
+                .filter(habit -> habit.getGoalId() != null && habit.getGoalId() == goalId)
+                .toList();
+    }
 }

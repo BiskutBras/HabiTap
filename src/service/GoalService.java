@@ -5,7 +5,6 @@ import model.Goal;
 import model.Goal.Priority;
 import model.Goal.Status;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -28,5 +27,12 @@ public class GoalService {
         return goalDAO.findAll().stream()
                 .filter(goal -> goal.getUserId() == userId)
                 .toList();
+    }
+
+    public Goal findGoalById(int goalId) {
+        return goalDAO.findAll().stream()
+                .filter(goal -> goal.getId() == goalId)
+                .findFirst()
+                .orElse(null);
     }
 }
