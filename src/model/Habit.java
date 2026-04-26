@@ -1,51 +1,39 @@
 package model;
 
-import java.time.LocalDate;
+import lombok.*;
 
+@Getter
+@Setter
+@AllArgsConstructor         // to read from a database
 public class Habit {
 
-    public enum Priority {
-        LOW, MEDIUM, HIGH
+    public enum Frequency {
+        daily, weekly, monthly
     }
 
+    // instance variables
     private int id;
     private String name;
     private String description;
-    private LocalDate dueDate;
-    private Priority priority;
     private boolean completed;
-    private Integer goalId; // nullable
-    private String goalName; // nullable (joined for views)
-    private String goalColor; // nullable (joined for views)
+    private Frequency frequency;
+    private int streak;
 
-    public Habit(int id, String name, String description, LocalDate dueDate, Priority priority) {
-        this.id = id;
+    // for views
+    private int goalId;
+    private String goalName;
+    private String goalColor;
+
+    // to create new habits
+    public Habit(String name, String description, Frequency frequency, int streak, int goalId) {
         this.name = name;
         this.description = description;
-        this.dueDate = dueDate;
-        this.priority = priority;
-        this.completed = false;
-        this.goalId = null;
+        this.frequency = frequency;
+        this.streak = streak;
+        this.goalId = goalId;
     }
 
-    public int getId() { return id; }
-    public String getName() { return name; }
-    public String getDescription() { return description; }
-    public LocalDate getDueDate() { return dueDate; }
-    public Priority getPriority() { return priority; }
-    public boolean isCompleted() { return completed; }
-    public Integer getGoalId() { return goalId; }
-    public String getGoalName() { return goalName; }
-    public String getGoalColor() { return goalColor; }
-
-    public void setName(String name) { this.name = name; }
-    public void setDescription(String description) { this.description = description; }
-    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
-    public void setPriority(Priority priority) { this.priority = priority; }
-    public void setGoalId(Integer goalId) { this.goalId = goalId; }
-    public void setGoalName(String goalName) { this.goalName = goalName; }
-    public void setGoalColor(String goalColor) { this.goalColor = goalColor; }
-
+    // helper method
     public void markCompleted() { this.completed = true; }
     public void markIncomplete() { this.completed = false; }
 }
