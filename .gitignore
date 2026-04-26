@@ -1,1 +1,13 @@
 /out/
+HabiTap.iml
+# Ignore most of .idea
+.idea/
+
+# But track these shared settings (optional)
+!.idea/compiler.xml
+!.idea/encodings.xml
+!.idea/misc.xml
+!.idea/modules.xml
+!.idea/runConfigurations/
+!.idea/inspectionProfiles/
+!.idea/codeStyles/
