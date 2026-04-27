@@ -2,7 +2,6 @@ package dao;
 
 import db.DB;
 import model.Habit;
-import model.Habit.Priority;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -14,20 +13,19 @@ import java.util.List;
 
 public class HabitDAO {
 
-    public void insert(Habit h, int userId) {
-        String sql = "INSERT INTO habits (user_id, name, description, due_date, priority, completed, goal_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    // add new record to table
+    public void insert(Habit habit) {
+        String sql = "INSERT INTO habits ( name, description, completed, frequency, streak, goal_id) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection con = DB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setInt(1, userId);
-            ps.setString(2, h.getName());
-            ps.setString(3, h.getDescription());
-            ps.setDate(4, Date.valueOf(h.getDueDate()));
-            ps.setString(5, h.getPriority().name());
-            ps.setInt(6, h.isCompleted() ? 1 : 0);
-            if (h.getGoalId() == null) ps.setNull(7, java.sql.Types.INTEGER);
-            else ps.setInt(7, h.getGoalId());
+            ps.setString(1, habit.getName());
+            ps.setString(2, habit.getDescription());
+            ps.setBoolean(3, habit.isCompleted());
+            ps.setString(4, habit.getFrequency().toString());
+            ps.setInt(5, habit.getStreak());
+            ps.setInt(6, habit.getGoalId());
 
             ps.executeUpdate();
         } catch (Exception e) {
@@ -35,17 +33,18 @@ public class HabitDAO {
         }
     }
 
+    // view all columns from table
     public List<Habit> findAll(int userId) {
         // 1. Changed LEFT JOIN to JOIN (INNER JOIN)
         // 2. Changed the WHERE clause to filter by g.user_id instead of h.user_id
-        String sql = "SELECT h.id, h.name, h.description, h.due_date, h.priority, h.completed, h.goal_id, " +
+        String sql = "SELECT h.id, h.name, h.description, h.completed, h.frequency, h.streak, h.goal_id, " +
                 "g.name AS goal_name, g.color AS goal_color " +
                 "FROM habits h " +
                 "JOIN goals g ON h.goal_id = g.id " +
                 "WHERE g.user_id = ? " +
                 "ORDER BY h.id ASC";
 
-        List<Habit> out = new ArrayList<>();
+        List<Habit> habitList = new ArrayList<>();
 
         try (Connection con = DB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -55,33 +54,27 @@ public class HabitDAO {
                 while (rs.next()) {
                     int id = rs.getInt("id");
                     String name = rs.getString("name");
-                    String desc = rs.getString("description");
-
-                    // Handle potential null dates depending on your DB schema
-                    java.sql.Date sqlDate = rs.getDate("due_date");
-                    LocalDate dueDate = (sqlDate != null) ? sqlDate.toLocalDate() : null;
-
-                    Priority priority = Priority.valueOf(rs.getString("priority"));
+                    String description = rs.getString("description");
                     boolean completed = rs.getInt("completed") == 1;
+                    Habit.Frequency frequency = Habit.Frequency.valueOf(rs.getString("frequency"));
+                    int streak = rs.getInt("streak");
 
-                    Integer goalId = (Integer) rs.getObject("goal_id");
+                    int goalId = (Integer) rs.getInt("goal_id");
                     String goalName = rs.getString("goal_name");
                     String goalColor = rs.getString("goal_color");
 
-                    Habit h = new Habit(id, name, desc, dueDate, priority);
-                    if (completed) h.markCompleted(); else h.markIncomplete();
-                    h.setGoalId(goalId);
-                    h.setGoalName(goalName);
-                    h.setGoalColor(goalColor);
+                    Habit h = new Habit(id, name, description, completed, frequency, streak, goalId, goalName, goalColor);
+                    if (completed) h.markCompleted();
+                    else h.markIncomplete();
 
-                    out.add(h);
+                    habitList.add(h);
                 }
             }
         } catch (Exception e) {
             throw new RuntimeException("DB read failed", e);
         }
-        System.out.println(out);
-        return out;
+        System.out.println(habitList);
+        return habitList;
     }
 
     public boolean setCompleted(int id, boolean completed) {
@@ -121,7 +114,8 @@ public class HabitDAO {
                 String goalColor = rs.getString("goal_color");
 
                 Habit h = new Habit(hid, name, desc, dueDate, priority);
-                if (completed) h.markCompleted(); else h.markIncomplete();
+                if (completed) h.markCompleted();
+                else h.markIncomplete();
                 h.setGoalId(goalId);
                 h.setGoalName(goalName);
                 h.setGoalColor(goalColor);
