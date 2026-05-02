@@ -11,7 +11,8 @@ public class HabitDAO {
 
     // add new row
     public void insert(Habit habit) {
-        String sql = "INSERT INTO habits ( name, description, completed, frequency, streak, goal_id) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO habits ( name, description, completed, frequency, streak, goal_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection con = DB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -24,7 +25,7 @@ public class HabitDAO {
         }
     }
 
-    // view all columns 
+    // view all columns
     public List<Habit> findAll(int userId) {
         // 1. Changed LEFT JOIN to JOIN (INNER JOIN)
         // 2. Changed the WHERE clause to filter by g.user_id instead of h.user_id
