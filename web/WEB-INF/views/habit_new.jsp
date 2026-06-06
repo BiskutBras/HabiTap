@@ -45,18 +45,21 @@
             </div>
 
             <div class="row">
-                <label>Due Date</label>
-                <input type="date" name="dueDate" required>
+                <label>Frequency</label>
+                <select name="frequency">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
             </div>
 
             <div class="row">
-                <label>Priority</label>
-                <select name="priority" required>
-                    <option value="">-- Select Priority --</option>
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                </select>
+                <label>Streak</label>
+                <div class="number-input">
+                    <button type="button" onclick="decrementStreak()">-</button>
+                    <input type="number" id="streak" name="streak" value="0" min="0" readonly>
+                    <button type="button" onclick="incrementStreak()">+</button>
+                </div>
             </div>
 
             <div class="row">
@@ -76,5 +79,21 @@
         </form>
     </div>
 </div>
+
+<script>
+    function decrementStreak() {
+        var input = document.getElementById('streak');
+        var value = parseInt(input.value);
+        if (value > 0) {
+            input.value = value - 1;
+        }
+    }
+
+    function incrementStreak() {
+        var input = document.getElementById('streak');
+        var value = parseInt(input.value);
+        input.value = value + 1;
+    }
+</script>
 </body>
 </html>

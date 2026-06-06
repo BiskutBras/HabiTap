@@ -1,7 +1,6 @@
 package controller;
 
 import model.Habit;
-import model.Habit.Priority;
 import model.Goal;
 import service.GoalService;
 import service.HabitService;
@@ -103,46 +102,21 @@ public class GoalControllerServlet extends HttpServlet {
         Goal created = goalService.createGoal(goalName, goalColor, userId, goalDueDate.atStartOfDay(), goalPriority);
 
         // Subtasks (habits)
-        String[] habitNames = req.getParameterValues("habitName");
+        String[] habitName = req.getParameterValues("habitName");
         String[] habitDescriptions = req.getParameterValues("habitDescription");
-        String[] habitDueDates = req.getParameterValues("habitDueDate");
-        String[] habitPriorities = req.getParameterValues("habitPriority");
 
-        if (habitNames != null) {
-            for (int i = 0; i < habitNames.length; i++) {
-                String hName = trim(habitNames[i]);
+
+        if (habitName != null) {
+            for (int i = 0; i < habitName.length; i++) {
+                String hName = trim(habitName[i]);
                 String hDesc = habitDescriptions != null && i < habitDescriptions.length ? trim(habitDescriptions[i]) : null;
-                String dueRaw = habitDueDates != null && i < habitDueDates.length ? trim(habitDueDates[i]) : null;
-                String prRaw = habitPriorities != null && i < habitPriorities.length ? trim(habitPriorities[i]) : null;
+
 
                 // Ignore completely blank rows
-                if (hName == null && dueRaw == null && prRaw == null && hDesc == null) continue;
 
-                if (hName == null || dueRaw == null || prRaw == null) {
-                    req.setAttribute("error", "Each subtask requires a title, due date, and priority (or remove the row).");
-                    forward(req, resp, "/WEB-INF/views/goal_new.jsp");
-                    return;
-                }
 
-                LocalDate dueDate;
-                try {
-                    dueDate = LocalDate.parse(dueRaw);
-                } catch (Exception e) {
-                    req.setAttribute("error", "Subtask due date must be YYYY-MM-DD.");
-                    forward(req, resp, "/WEB-INF/views/goal_new.jsp");
-                    return;
-                }
-
-                Priority priority;
-                try {
-                    priority = Habit.Priority.valueOf(prRaw.toUpperCase());
-                } catch (Exception e) {
-                    req.setAttribute("error", "Subtask priority must be LOW, MEDIUM, or HIGH.");
-                    forward(req, resp, "/WEB-INF/views/goal_new.jsp");
-                    return;
-                }
-
-                habitService.createHabitForGoal(userId, created.getId(), hName, hDesc == null ? "" : hDesc, dueDate, priority);
+                Habit newHabit = new Habit(hName, hDesc, Habit.Frequency.daily, 0, 0);
+                habitService.createNewHabit(newHabit);
             }
         }
 
