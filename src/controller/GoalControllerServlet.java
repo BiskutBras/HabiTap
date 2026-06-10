@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/goals", "/goals/new"})
+@WebServlet(urlPatterns = {"/goals/*", "/goals/new", })
 public class GoalControllerServlet extends HttpServlet {
 
     private GoalService goalService;
@@ -30,10 +30,16 @@ public class GoalControllerServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String path = req.getServletPath();
+        String path = req.getRequestURI().replace(req.getContextPath(), "");
 
         if ("/goals/new".equals(path)) {
             forward(req, resp, "/WEB-INF/views/goal_new.jsp");
+            return;
+        }
+
+        // Check if this is a goal-specific habits view: /goals/{id}/habits
+        if (path.startsWith("/goals/") && path.endsWith("/habits")) {
+            handleGoalHabits(req, resp);
             return;
         }
 
@@ -123,6 +129,23 @@ public class GoalControllerServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/goals");
     }
 
+    private void handleGoalHabits(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+
+        String path = req.getRequestURI().replace(req.getContextPath(), "");
+        // Extract goal ID from the path: /goals/{id}/habits
+        String goalIdRaw = path.substring(path.indexOf("/goals/") + 7, path.lastIndexOf("/habits"));
+        int goalId = Integer.parseInt(goalIdRaw);
+
+        // get userId stored at login
+        HttpSession session = req.getSession(false);
+        Integer userId = (Integer) session.getAttribute("userId");
+
+        req.setAttribute("habits", habitService.listHabitsByGoal(userId, goalId));
+        req.setAttribute("goal", goalService.findGoalById(goalId));
+        forward(req, resp, "/WEB-INF/views/habits_goal.jsp");
+    }
+
     private void forward(HttpServletRequest req, HttpServletResponse resp, String view)
             throws ServletException, IOException {
         RequestDispatcher rd = req.getRequestDispatcher(view);
@@ -133,5 +156,14 @@ public class GoalControllerServlet extends HttpServlet {
         if (s == null) return null;
         s = s.trim();
         return s.isEmpty() ? null : s;
+    }
+
+    private Integer parseOptionalInt(String s) {
+        if (s == null) return null;
+        try {
+            return Integer.parseInt(s);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

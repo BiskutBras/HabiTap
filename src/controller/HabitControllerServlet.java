@@ -42,12 +42,6 @@ public class HabitControllerServlet extends HttpServlet {
             return;
         }
 
-        // Check if this is a goal-specific habits view: /goals/{id}/habits
-        if (path.startsWith("/goals/") && path.endsWith("/habits")) {
-            handleGoalHabits(req, resp);
-            return;
-        }
-
         // get userId stored at login
         HttpSession session = req.getSession(false);
         Integer userId = (Integer) session.getAttribute("userId");
@@ -177,29 +171,6 @@ public class HabitControllerServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/habits");
     }
 
-    private void handleGoalHabits(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-
-        String path = req.getServletPath();
-        // Extract goal ID from the path: /goals/{id}/habits
-        String goalIdRaw = path.substring(path.indexOf("/goals/") + 7, path.lastIndexOf("/habits"));
-        Integer goalId = parseOptionalInt(goalIdRaw);
-
-        if (goalId == null) {
-            resp.sendError(400, "Invalid goal id.");
-            return;
-        }
-
-        // get userId stored at login
-        HttpSession session = req.getSession(false);
-        Integer userId = (Integer) session.getAttribute("userId");
-
-        req.setAttribute("habits", habitService.listHabitsByGoal(userId, goalId));
-        req.setAttribute("goal", goalService.findGoalById(goalId));
-        forward(req, resp, "/WEB-INF/views/habits_goal.jsp");
-    }
-
-
     // helper method
     private int parseIdOrBadRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String idRaw = trim(req.getParameter("id"));
@@ -239,7 +210,7 @@ public class HabitControllerServlet extends HttpServlet {
         String name = trim(req.getParameter("name"));
         String description = trim(req.getParameter("description"));
         Habit.Frequency frequency = Habit.Frequency.valueOf(trim(req.getParameter("frequency"))); // daily, weekly or monthly
-        int streak = Integer.parseInt(req.getParameter("streak"));
+        int streak = (req.getParameter("streak") == null) ? 0 : Integer.parseInt(req.getParameter("streak"));
         int goalId = Integer.parseInt(trim(req.getParameter("goalId")));
 
         return new Habit(name, description, frequency, streak, goalId);
