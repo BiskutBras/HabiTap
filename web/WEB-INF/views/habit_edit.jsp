@@ -68,7 +68,7 @@
 
             <div class="row">
                 <label for="streak">Streak
-                <input name="streak" type="number">
+                <input name="streak" type="number" value="<%= habit.getStreak() %>">
                 </label>
             </div>
 
