@@ -9,7 +9,7 @@ public class Goal {
     }
 
     public enum Status {
-        ACTIVE, COMPLETED, CANCELLED
+        ACTIVE, COMPLETED
     }
 
     private int id;
