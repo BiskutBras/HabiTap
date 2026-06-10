@@ -210,9 +210,16 @@ public class HabitControllerServlet extends HttpServlet {
         String name = trim(req.getParameter("name"));
         String description = trim(req.getParameter("description"));
         Habit.Frequency frequency = Habit.Frequency.valueOf(trim(req.getParameter("frequency"))); // daily, weekly or monthly
-        int streak = (req.getParameter("streak") == null) ? 0 : Integer.parseInt(req.getParameter("streak"));
-        int goalId = Integer.parseInt(trim(req.getParameter("goalId")));
-
+        String streakRaw = req.getParameter("streak");
+        int streak = 0;
+        if (!streakRaw.isBlank()) {
+            streak = Integer.parseInt(streakRaw);
+        }
+        String goalIdRaw = req.getParameter("goalId");
+        int goalId = 0;
+        if (!goalIdRaw.isBlank()) {
+            goalId = Integer.parseInt(goalIdRaw);
+        }
         return new Habit(name, description, frequency, streak, goalId);
     }
 
