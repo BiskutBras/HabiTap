@@ -14,9 +14,11 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/goals/*", "/goals/new", })
+// handle /goals/${goalId}/habits, /goals/new and /goals/${goalId}/next
+@WebServlet(urlPatterns = {"/goals/*", "/goals/new",})
 public class GoalControllerServlet extends HttpServlet {
 
     private GoalService goalService;
@@ -30,7 +32,7 @@ public class GoalControllerServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String path = req.getRequestURI().replace(req.getContextPath(), "");
+        String path = "/goals" + req.getPathInfo();
 
         if ("/goals/new".equals(path)) {
             forward(req, resp, "/WEB-INF/views/goal_new.jsp");
@@ -46,6 +48,26 @@ public class GoalControllerServlet extends HttpServlet {
         // get userId from session
         HttpSession session = req.getSession(false);
         Integer userId = (Integer) session.getAttribute("userId");
+
+        if (path.startsWith("/goals") && (path.endsWith("/next") || path.endsWith("/previous"))) {
+            // /goals/${goalId}/action
+            String[] parts = path.split("/");
+            int goalId = Integer.parseInt(parts[2]);
+            String action = parts[3];
+
+            if (action.equals("next")) {
+                goalId += 1;
+            } else if (action.equals("previous")) {
+                goalId -= 1;
+            }
+
+            List<Habit> habitList = habitService.listHabitsByGoal(userId, goalId);
+
+            req.setAttribute("habitList", habitList);
+            req.setAttribute("goal", goalService.findGoalById(goalId));
+            forward(req, resp, "/WEB-INF/views/habits_goal.jsp");
+        }
+
         if (userId == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
@@ -141,7 +163,7 @@ public class GoalControllerServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         Integer userId = (Integer) session.getAttribute("userId");
 
-        req.setAttribute("habits", habitService.listHabitsByGoal(userId, goalId));
+        req.setAttribute("habitList", habitService.listHabitsByGoal(userId, goalId));
         req.setAttribute("goal", goalService.findGoalById(goalId));
         forward(req, resp, "/WEB-INF/views/habits_goal.jsp");
     }

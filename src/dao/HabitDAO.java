@@ -145,6 +145,11 @@ public class HabitDAO {
         ps.setBoolean(3, habit.isCompleted());
         ps.setString(4, habit.getFrequency().toString());
         ps.setInt(5, habit.getStreak());
-        ps.setInt(6, habit.getGoalId());
+        // handle habits with no goal
+        if (habit.getGoalId() == 0) {
+            ps.setNull(6, Types.INTEGER);
+        } else {
+            ps.setInt(6, habit.getGoalId());
+        }
     }
 }
