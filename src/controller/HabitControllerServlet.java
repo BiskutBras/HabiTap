@@ -100,8 +100,7 @@ public class HabitControllerServlet extends HttpServlet {
             return;
         }
 
-        Habit newHabit = getParameter(req);
-        newHabit.setId(userId);
+        Habit newHabit = getParameter(req,userId);
 
         try {
             habitService.createNewHabit(newHabit);
@@ -156,7 +155,11 @@ public class HabitControllerServlet extends HttpServlet {
         int habitId = parseIdOrBadRequest(req, resp);
         if (habitId == -1) return;
 
-        Habit updatedHabit = getParameter(req);
+        // get userId stored at login
+        HttpSession session = req.getSession(false);
+        Integer userId = (Integer) session.getAttribute("userId");
+
+        Habit updatedHabit = getParameter(req, userId);
         updatedHabit.setId(habitId);
 
         habitService.updateHabit(updatedHabit);
@@ -213,13 +216,13 @@ public class HabitControllerServlet extends HttpServlet {
         }
     }
 
-    private Habit getParameter(HttpServletRequest req) {
+    private Habit getParameter(HttpServletRequest req, int userId) {
         String name = trim(req.getParameter("name"));
         String description = trim(req.getParameter("description"));
         Habit.Frequency frequency = Habit.Frequency.valueOf(trim(req.getParameter("frequency"))); // daily, weekly or monthly
         int streak = Integer.parseInt(req.getParameter("streak"));
         int goalId = Integer.parseInt(req.getParameter("goalId"));
-        return new Habit(name, description, frequency, streak, goalId);
+        return new Habit(name, description, frequency, streak, goalId, userId);
     }
 
 }

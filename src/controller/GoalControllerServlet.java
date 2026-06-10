@@ -139,11 +139,7 @@ public class GoalControllerServlet extends HttpServlet {
                 String hName = trim(habitName[i]);
                 String hDesc = habitDescriptions != null && i < habitDescriptions.length ? trim(habitDescriptions[i]) : null;
 
-
-                // Ignore completely blank rows
-
-
-                Habit newHabit = new Habit(hName, hDesc, Habit.Frequency.daily, 0, 0);
+                Habit newHabit = new Habit(hName, hDesc, Habit.Frequency.daily, 0, 0, userId);
                 habitService.createNewHabit(newHabit);
             }
         }

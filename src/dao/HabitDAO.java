@@ -11,8 +11,8 @@ public class HabitDAO {
 
     // add new row
     public void insert(Habit habit) {
-        String sql = "INSERT INTO habits ( name, description, completed, frequency, streak, goal_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO habits ( name, description, completed, frequency, streak, goal_id, user_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection con = DB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -29,11 +29,11 @@ public class HabitDAO {
     public List<Habit> findAll(int userId) {
         // 1. Changed LEFT JOIN to JOIN (INNER JOIN)
         // 2. Changed the WHERE clause to filter by g.user_id instead of h.user_id
-        String sql = "SELECT h.id, h.name, h.description, h.completed, h.frequency, h.streak, h.goal_id, " +
+        String sql = "SELECT h.id, h.name, h.description, h.completed, h.frequency, h.streak, h.goal_id, h.user_id, " +
                 "g.name AS goal_name, g.color AS goal_color " +
                 "FROM habits h " +
-                "JOIN goals g ON h.goal_id = g.id " +
-                "WHERE g.user_id = ? " +
+                "LEFT JOIN goals g ON h.goal_id = g.id " +
+                "WHERE h.user_id = ? " +
                 "ORDER BY h.id ASC";
 
         List<Habit> habitList = new ArrayList<>();
@@ -73,7 +73,7 @@ public class HabitDAO {
 
     // view habit from id
     public Habit findById(int id) {
-        String sql = "SELECT h.id, h.name, h.description, h.completed, h.frequency, h.streak, h.goal_id, " +
+        String sql = "SELECT h.id, h.name, h.description, h.completed, h.frequency, h.streak, h.goal_id, h.user_id, " +
                 "g.name AS goal_name, g.color AS goal_color " +
                 "FROM habits h LEFT JOIN goals g ON h.goal_id = g.id WHERE h.id = ?";
         try (Connection con = DB.getConnection();
@@ -93,7 +93,7 @@ public class HabitDAO {
 
     // update row
     public boolean update(Habit habit) {
-        String sql = "UPDATE habits SET name = ?, description = ?, completed = ?, frequency = ?, streak = ?, goal_id = ? WHERE id = ?";
+        String sql = "UPDATE habits SET name = ?, description = ?, completed = ?, frequency = ?, streak = ?, goal_id = ?, user_id = ? WHERE id = ?";
         try (Connection con = DB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -130,13 +130,14 @@ public class HabitDAO {
         int goalId = rs.getInt("goal_id");
         String goalName = rs.getString("goal_name");
         String goalColor = rs.getString("goal_color");
+        int userId = rs.getInt("user_id");
 
-        return new Habit(habitId, name, description, completed, frequency, streak, goalId, goalName, goalColor);
+        return new Habit(habitId, name, description, completed, frequency, streak, goalId, goalName, goalColor, userId);
     }
 
     private void bindUpdateParameters(PreparedStatement ps, Habit habit) throws SQLException {
         bindInsertParameters(ps, habit);
-        ps.setInt(7, habit.getId());
+        ps.setInt(8, habit.getId());
     }
 
     private void bindInsertParameters(PreparedStatement ps, Habit habit) throws SQLException {
@@ -151,5 +152,6 @@ public class HabitDAO {
         } else {
             ps.setInt(6, habit.getGoalId());
         }
+        ps.setInt(7, habit.getUserId());
     }
 }

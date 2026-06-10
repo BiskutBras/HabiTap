@@ -24,14 +24,16 @@ public class Habit {
     private int goalId;
     private String goalName;
     private String goalColor;
+    private int userId;
 
     // to create new habit
-    public Habit(String name, String description, Frequency frequency, int streak, int goalId) {
+    public Habit(String name, String description, Frequency frequency, int streak, int goalId, int userId) {
         this.name = name;
         this.description = (description == null) ? "" : description;
         this.frequency = frequency;
         this.streak = streak;
         this.goalId = goalId;
+        this.userId = userId;
     }
 
     // to update old habit
