@@ -13,7 +13,6 @@
     <title>Habit Tracker App</title>
 
 
-
     <%!
         // Escape Java strings safely into JS string literals
         private String escJs(String s) {
@@ -33,7 +32,9 @@
     if (habitsList == null) habitsList = java.util.Collections.emptyList();
 
     int completedCount = 0;
-    for (Habit h : habitsList) { if (h.isCompleted()) completedCount++; }
+    for (Habit h : habitsList) {
+        if (h.isCompleted()) completedCount++;
+    }
     int totalHabits = habitsList.size();
     int completionRate = (totalHabits == 0) ? 0 : Math.round((completedCount * 100f) / totalHabits);
 
@@ -53,15 +54,19 @@
     <div class="header">
         <div class="header-top">
             <div>
-                <p class="header-date"><%=dateStr%></p>
+                <p class="header-date"><%=dateStr%>
+                </p>
                 <h1 class="header-title">Habit Dashboard</h1>
                 <p class="header-subtitle"><%=completedCount%> of <%=totalHabits%> completed</p>
             </div>
             <div class="header-actions">
                 <button class="nav-button" onclick="location.href='<%=request.getContextPath()%>/goals'">Goals</button>
-                <button class="nav-button" onclick="location.href='<%=request.getContextPath()%>/calendar'">Calendar</button>
-                <button class="nav-button ghost" onclick="location.href='<%=request.getContextPath()%>/logout'">Logout</button>
-                <div class="header-icon"><%=ICON_STAR%></div>
+                <button class="nav-button" onclick="location.href='<%=request.getContextPath()%>/calendar'">Calendar
+                </button>
+                <button class="nav-button ghost" onclick="location.href='<%=request.getContextPath()%>/logout'">Logout
+                </button>
+                <div class="header-icon"><%=ICON_STAR%>
+                </div>
             </div>
         </div>
 
@@ -77,7 +82,8 @@
                 <div class="stat-header">
                     <span class="stat-label">Total Habits</span>
                 </div>
-                <p class="stat-value"><%=totalHabits%></p>
+                <p class="stat-value"><%=totalHabits%>
+                </p>
             </div>
         </div>
     </div>
@@ -98,10 +104,10 @@
                 <%
                     if (habitsList.isEmpty()) {
                 %>
-                    <div style="color:#6b7280;">No habits found. Create one using the + button.</div>
+                <div style="color:#6b7280;">No habits found. Create one using the + button.</div>
                 <%
-                    } else {
-                        for (Habit h : habitsList) {
+                } else {
+                    for (Habit h : habitsList) {
                 %>
                 <div class="habit-card" onclick="toggleHabit('<%=h.getId()%>', <%=h.isCompleted()%>)">
                     <div class="habit-icon <%= h.isCompleted() ? "completed" : "" %>">
@@ -110,15 +116,21 @@
 
                     <%--name, frequency and streak--%>
                     <div class="habit-info">
-                        <h3 class="habit-name <%= h.isCompleted() ? "completed" : "" %>"><%=h.getName()%></h3>
-                        <p class="habit-streak">Frequency: <%=h.getFrequency()%> &bull; Streak: <%=h.getStreak()%></p>
+                        <h3 class="habit-name <%= h.isCompleted() ? "completed" : "" %>"><%=h.getName()%>
+                        </h3>
+                        <p class="habit-streak">Frequency: <%=h.getFrequency()%> &bull; Streak: <%=h.getStreak()%>
+                        </p>
+                        <p class="habit-description"><%=h.getDescription()%>
+                        </p>
                     </div>
 
                     <div class="habit-actions">
-                        <button class="habit-action-button" title="Edit" onclick="event.stopPropagation(); goEdit('<%=h.getId()%>')">
+                        <button class="habit-action-button" title="Edit"
+                                onclick="event.stopPropagation(); goEdit('<%=h.getId()%>')">
                             <%=ICON_PENCIL%>
                         </button>
-                        <button class="habit-action-button" title="Delete" onclick="event.stopPropagation(); deleteHabit('<%=h.getId()%>')">
+                        <button class="habit-action-button" title="Delete"
+                                onclick="event.stopPropagation(); deleteHabit('<%=h.getId()%>')">
                             <%=ICON_TRASH%>
                         </button>
                         <div class="habit-check">
