@@ -17,7 +17,7 @@ public class HabitDAO {
         try (Connection con = DB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            bindParameters(ps, habit);
+            bindInsertParameters(ps, habit);
 
             ps.executeUpdate();
         } catch (Exception e) {
@@ -97,7 +97,7 @@ public class HabitDAO {
         try (Connection con = DB.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            bindParameters(ps, habit);
+            bindUpdateParameters(ps, habit);
 
             return ps.executeUpdate() == 1;
         } catch (Exception e) {
@@ -134,7 +134,12 @@ public class HabitDAO {
         return new Habit(habitId, name, description, completed, frequency, streak, goalId, goalName, goalColor);
     }
 
-    private void bindParameters(PreparedStatement ps, Habit habit) throws SQLException {
+    private void bindUpdateParameters(PreparedStatement ps, Habit habit) throws SQLException {
+        bindInsertParameters(ps, habit);
+        ps.setInt(7, habit.getId());
+    }
+
+    private void bindInsertParameters(PreparedStatement ps, Habit habit) throws SQLException {
         ps.setString(1, habit.getName());
         ps.setString(2, habit.getDescription());
         ps.setBoolean(3, habit.isCompleted());
