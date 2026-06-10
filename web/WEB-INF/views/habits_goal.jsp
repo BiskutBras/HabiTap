@@ -14,7 +14,6 @@
     <title>Habits for Goal • HabiTap</title>
 
 
-
     <%!
         // Escape Java strings safely into JS string literals
         private String escJs(String s) {
@@ -56,8 +55,8 @@
              Habit h = habitsList.get(i);
              String icon = "📝"; // default
              // Simple icon mapping by priority
-             if (h.getPriority() != null) {
-               String p = h.getPriority().name();
+             if (h.getFrequency() != null) {
+               String p = h.getFrequency().name();
                if ("HIGH".equals(p)) icon = "🔥";
                else if ("MEDIUM".equals(p)) icon = "⚡";
                else icon = "🌱";
@@ -68,8 +67,8 @@
             name: "<%=escJs(h.getName())%>",
             icon: "<%=icon%>",
             completed: <%=h.isCompleted()%>,
-            dueDate: "<%=h.getDueDate()%>",
-            priority: "<%=h.getPriority()%>"
+            dueDate: "<%=h.getStreak()%>",
+            priority: "<%=h.getFrequency()%>"
         }<%= (i < habitsList.size() - 1) ? "," : "" %>
         <% } %>
     ];
@@ -77,9 +76,11 @@
     function getCompletedCount() {
         return habits.filter(h => h.completed).length;
     }
+
     function getTotalHabits() {
         return habits.length;
     }
+
     function getCompletionRate() {
         const total = getTotalHabits();
         if (total === 0) return 0;
@@ -157,7 +158,12 @@
 
         // Use real date
         const now = new Date();
-        const dateStr = now.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "short", day: "numeric" });
+        const dateStr = now.toLocaleDateString(undefined, {
+            weekday: "long",
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+        });
 
         return `
       <div class="habit-tracker">
@@ -182,8 +188,10 @@
               <h2 class="goal-name"><%= goal != null ? goal.getName() : "Unknown Goal" %></h2>
               <p class="goal-meta">
                 Priority: <%= goal != null ? goal.getPriority() : "N/A" %>
-                ${goal && goal.dueDate ? ` • Due: ${goal.dueDate}` : ''}
-              </p>
+                <% if (goal != null && goal.getDueDate() != null) { %>
+    • Due: <%= goal.getDueDate() %>
+  <% } %>
+                </p>
             </div>
           </div>
 
@@ -217,35 +225,48 @@
             </div>
 
             <div class="habits-list">
-              ${
-                habits.length === 0
-                ? `<div style="color:#6b7280;">No habits found for this goal. Create one using the + button.</div>`
-                : habits.map((habit, index) => `
-                  <div class="habit-card" onclick="toggleHabit('${habit.id}')">
-                    <div class="habit-icon ${habit.completed ? 'completed' : ''}">
-                      <span>${habit.icon}</span>
-                    </div>
+  <% if (habits == null || habits.isEmpty()) { %>
+    <div style="color:#6b7280;">No habits found for this goal. Create one using the + button.</div>
+  <% } else { %>
+    <% for (Habit habit : habits) { %>
+      <div class="habit-card" onclick="toggleHabit('<%= habit.getId() %>')">
 
-                    <div class="habit-info">
-                      <h3 class="habit-name ${habit.completed ? 'completed' : ''}">${habit.name}</h3>
-                      <p class="habit-streak">Due: ${habit.dueDate} • Priority: ${habit.priority}</p>
-                    </div>
+        <div class="habit-icon <%= habit.isCompleted() ? "completed" : "" %>">
+          <span><%= habit.getIcon() %></span>
+        </div>
 
-                    <div class="habit-actions">
-                      <button class="habit-action-button" title="Edit" onclick="event.stopPropagation(); goEdit('${habit.id}')">
-                        ${icons.pencil}
-                      </button>
-                      <button class="habit-action-button" title="Delete" onclick="event.stopPropagation(); deleteHabit('${habit.id}')">
-                        ${icons.trash}
-                      </button>
-                      <div class="habit-check">
-                        ${habit.completed ? icons.circleCheck : icons.circle}
-                      </div>
-                    </div>
-                  </div>
-                `).join('')
-              }
-            </div>
+        <div class="habit-info">
+          <h3 class="habit-name <%= habit.isCompleted() ? "completed" : "" %>">
+            <%= habit.getName() %>
+          </h3>
+          <p class="habit-streak">
+            Due: <%= habit.getDueDate() %> • Priority: <%= habit.getPriority() %>
+          </p>
+        </div>
+
+        <div class="habit-actions">
+          <button class="habit-action-button" title="Edit"
+            onclick="event.stopPropagation(); goEdit('<%= habit.getId() %>')">
+            ✏️
+          </button>
+          <button class="habit-action-button" title="Delete"
+            onclick="event.stopPropagation(); deleteHabit('<%= habit.getId() %>')">
+            🗑️
+          </button>
+          <div class="habit-check">
+            <% if (habit.isCompleted()) { %>
+              ✅
+            <% } else { %>
+              ⭕
+            <% } %>
+          </div>
+        </div>
+
+      </div>
+    <% } %>
+  <% } %>
+</div>
+
           </section>
         </div>
       </div>

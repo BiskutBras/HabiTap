@@ -102,22 +102,16 @@
                 <%
                     } else {
                         for (Habit h : habitsList) {
-                            String icon = "📝";
-                            if (h.getPriority() != null) {
-                                String p = h.getPriority().name();
-                                if ("HIGH".equals(p)) icon = "🔥";
-                                else if ("MEDIUM".equals(p)) icon = "⚡";
-                                else icon = "🌱";
-                            }
                 %>
                 <div class="habit-card" onclick="toggleHabit('<%=h.getId()%>', <%=h.isCompleted()%>)">
                     <div class="habit-icon <%= h.isCompleted() ? "completed" : "" %>">
-                        <span><%=icon%></span>
+
                     </div>
 
+                    <%--name, frequency and streak--%>
                     <div class="habit-info">
                         <h3 class="habit-name <%= h.isCompleted() ? "completed" : "" %>"><%=h.getName()%></h3>
-                        <p class="habit-streak">Due: <%=h.getDueDate()%> &bull; Priority: <%=h.getPriority()%></p>
+                        <p class="habit-streak">Frequency: <%=h.getFrequency()%> &bull; Streak: <%=h.getStreak()%></p>
                     </div>
 
                     <div class="habit-actions">

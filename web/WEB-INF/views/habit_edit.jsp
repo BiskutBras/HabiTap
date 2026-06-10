@@ -58,26 +58,26 @@
             </div>
 
             <div class="row">
-                <label for="dueDate">Due Date</label>
-                <input id="dueDate" name="dueDate" type="date" required
-                       value="<%=habit.getDueDate()%>"/>
+                <label for="frequency">Frequency</label>
+                <select id="frequency" name="frequency" required>
+                    <option value="daily" <%= habit.getFrequency() != null && habit.getFrequency().name().equals("daily") ? "selected" : "" %>>Daily</option>
+                    <option value="weekly" <%= habit.getFrequency() != null && habit.getFrequency().name().equals("weekly") ? "selected" : "" %>>Weekly</option>
+                    <option value="monthly" <%= habit.getFrequency() != null && habit.getFrequency().name().equals("monthly") ? "selected" : "" %>>Monthly</option>
+                </select>
             </div>
 
             <div class="row">
-                <label for="priority">Priority</label>
-                <select id="priority" name="priority" required>
-                    <option value="LOW" <%= habit.getPriority() != null && habit.getPriority().name().equals("LOW") ? "selected" : "" %>>Low</option>
-                    <option value="MEDIUM" <%= habit.getPriority() != null && habit.getPriority().name().equals("MEDIUM") ? "selected" : "" %>>Medium</option>
-                    <option value="HIGH" <%= habit.getPriority() != null && habit.getPriority().name().equals("HIGH") ? "selected" : "" %>>High</option>
-                </select>
+                <label for="streak">Streak
+                <input name="streak" type="number">
+                </label>
             </div>
 
             <div class="row">
                 <label for="goalId">Goal (optional)</label>
                 <select id="goalId" name="goalId">
-                    <option value="" <%= habit.getGoalId() == null ? "selected" : "" %>>-- No Goal --</option>
+                    <option value="" <%= habit.getGoalId() == 0 ? "selected" : "" %>>-- No Goal --</option>
                     <% for (Goal g : goals) { %>
-                    <option value="<%=g.getId()%>" <%= habit.getGoalId() != null && habit.getGoalId().intValue() == g.getId() ? "selected" : "" %>>
+                    <option value="<%=g.getId()%>" <%= habit.getGoalId() != 0 && habit.getGoalId() == g.getId() ? "selected" : "" %>>
                         <%=g.getName()%>
                     </option>
                     <% } %>

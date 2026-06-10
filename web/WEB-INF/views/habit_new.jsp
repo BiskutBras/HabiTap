@@ -54,15 +54,6 @@
             </div>
 
             <div class="row">
-                <label>Streak</label>
-                <div class="number-input">
-                    <button type="button" onclick="decrementStreak()">-</button>
-                    <input type="number" id="streak" name="streak" value="0" min="0" readonly>
-                    <button type="button" onclick="incrementStreak()">+</button>
-                </div>
-            </div>
-
-            <div class="row">
                 <label>Goal (optional)</label>
                 <select name="goalId">
                     <option value="">-- No Goal --</option>
