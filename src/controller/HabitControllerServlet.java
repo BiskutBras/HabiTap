@@ -120,7 +120,7 @@ public class HabitControllerServlet extends HttpServlet {
         if (id == -1) return;
 
         habitService.markComplete(id);
-        resp.sendRedirect(req.getContextPath() + "/habits");
+        resp.sendRedirect(goalRedirect(req));
     }
 
     private void handleIncomplete(HttpServletRequest req, HttpServletResponse resp)
@@ -130,7 +130,7 @@ public class HabitControllerServlet extends HttpServlet {
         if (id == -1) return;
 
         habitService.markIncomplete(id);
-        resp.sendRedirect(req.getContextPath() + "/habits");
+        resp.sendRedirect(goalRedirect(req));
     }
 
     // redirect to edit page
@@ -160,7 +160,7 @@ public class HabitControllerServlet extends HttpServlet {
         updatedHabit.setId(habitId);
 
         habitService.updateHabit(updatedHabit);
-        resp.sendRedirect(req.getContextPath() + "/habits");
+        resp.sendRedirect(goalRedirect(req));
     }
 
     private void handleDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -168,7 +168,7 @@ public class HabitControllerServlet extends HttpServlet {
         if (id == -1) return;
 
         habitService.deleteHabit(id);
-        resp.sendRedirect(req.getContextPath() + "/habits");
+        resp.sendRedirect(goalRedirect(req));
     }
 
     // helper method
@@ -183,6 +183,13 @@ public class HabitControllerServlet extends HttpServlet {
             return -1;
         }
         return id;
+    }
+
+    // Send user back to the goal page if the request carried a goalId,
+    // otherwise to the global habit dashboard.
+    private String goalRedirect(HttpServletRequest req) {
+        String gid = trim(req.getParameter("goalId"));
+        return req.getContextPath() + (gid != null ? "/goals/" + gid + "/habits" : "/habits");
     }
 
     private void forward(HttpServletRequest req, HttpServletResponse resp, String view)
