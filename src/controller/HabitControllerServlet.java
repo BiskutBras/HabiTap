@@ -47,7 +47,7 @@ public class HabitControllerServlet extends HttpServlet {
         Integer userId = (Integer) session.getAttribute("userId");
 
         // default: /habits
-        req.setAttribute("habits", habitService.listHabits(userId));
+        req.setAttribute("habitList", habitService.listHabits(userId));
         forward(req, resp, "/WEB-INF/views/habits.jsp");
     }
 
@@ -217,16 +217,8 @@ public class HabitControllerServlet extends HttpServlet {
         String name = trim(req.getParameter("name"));
         String description = trim(req.getParameter("description"));
         Habit.Frequency frequency = Habit.Frequency.valueOf(trim(req.getParameter("frequency"))); // daily, weekly or monthly
-        String streakRaw = req.getParameter("streak");
-        int streak = 0;
-        if (!streakRaw.isBlank()) {
-            streak = Integer.parseInt(streakRaw);
-        }
-        String goalIdRaw = req.getParameter("goalId");
-        int goalId = 0;
-        if (!goalIdRaw.isBlank()) {
-            goalId = Integer.parseInt(goalIdRaw);
-        }
+        int streak = Integer.parseInt(req.getParameter("streak"));
+        int goalId = Integer.parseInt(req.getParameter("goalId"));
         return new Habit(name, description, frequency, streak, goalId);
     }
 

@@ -37,7 +37,7 @@ public class CalendarControllerServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         Integer userId = (Integer) session.getAttribute("userId");
 
-        req.setAttribute("habits", habitService.listHabits(userId));
+        req.setAttribute("habitList", habitService.listHabits(userId));
         req.setAttribute("calendarItems", calendarService.listItems());
         forward(req, resp, "/WEB-INF/views/calendar.jsp");
     }

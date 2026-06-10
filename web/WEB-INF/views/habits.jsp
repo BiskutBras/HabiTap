@@ -28,7 +28,7 @@
 
 <body>
 <%
-    List<Habit> habitsList = (List<Habit>) request.getAttribute("habits");
+    List<Habit> habitsList = (List<Habit>) request.getAttribute("habitList");
     if (habitsList == null) habitsList = java.util.Collections.emptyList();
 
     int completedCount = 0;

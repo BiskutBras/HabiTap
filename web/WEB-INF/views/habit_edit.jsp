@@ -75,7 +75,7 @@
             <div class="row">
                 <label for="goalId">Goal (optional)</label>
                 <select id="goalId" name="goalId">
-                    <option value="" <%= habit.getGoalId() == 0 ? "selected" : "" %>>-- No Goal --</option>
+                    <option value="0" <%= habit.getGoalId() == 0 ? "selected" : "" %>>-- No Goal --</option>
                     <% for (Goal g : goals) { %>
                     <option value="<%=g.getId()%>" <%= habit.getGoalId() != 0 && habit.getGoalId() == g.getId() ? "selected" : "" %>>
                         <%=g.getName()%>

@@ -54,9 +54,15 @@
             </div>
 
             <div class="row">
+                <label for="streak">Streak
+                    <input id="streak" name="streak" type="number" value="0">
+                </label>
+            </div>
+
+            <div class="row">
                 <label>Goal (optional)</label>
                 <select name="goalId">
-                    <option value="">-- No Goal --</option>
+                    <option value="0">-- No Goal --</option>
                     <% for (Goal g : goals) { %>
                     <option value="<%=g.getId()%>"><%=g.getName()%></option>
                     <% } %>
