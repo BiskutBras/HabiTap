@@ -13,29 +13,19 @@
     <title>Habit Tracker App</title>
 
 
-    <%!
-        // Escape Java strings safely into JS string literals
-        private String escJs(String s) {
-            if (s == null) return "";
-            return s.replace("\\", "\\\\")
-                    .replace("'", "\\'")
-                    .replace("\"", "\\\"")
-                    .replace("\r", "")
-                    .replace("\n", "\\n");
-        }
-    %>
+
 </head>
 
 <body>
 <%
-    List<Habit> habitsList = (List<Habit>) request.getAttribute("habitList");
-    if (habitsList == null) habitsList = java.util.Collections.emptyList();
+    List<Habit> habitList = (List<Habit>) request.getAttribute("habitList");
+    if (habitList == null) habitList = java.util.Collections.emptyList();
 
     int completedCount = 0;
-    for (Habit h : habitsList) {
+    for (Habit h : habitList) {
         if (h.isCompleted()) completedCount++;
     }
-    int totalHabits = habitsList.size();
+    int totalHabits = habitList.size();
     int completionRate = (totalHabits == 0) ? 0 : Math.round((completedCount * 100f) / totalHabits);
 
     java.util.Date now = new java.util.Date();
@@ -60,11 +50,9 @@
                 <p class="header-subtitle"><%=completedCount%> of <%=totalHabits%> completed</p>
             </div>
             <div class="header-actions">
-                <button class="nav-button" onclick="location.href='<%=request.getContextPath()%>/goals'">Goals</button>
-                <button class="nav-button" onclick="location.href='<%=request.getContextPath()%>/calendar'">Calendar
-                </button>
-                <button class="nav-button ghost" onclick="location.href='<%=request.getContextPath()%>/logout'">Logout
-                </button>
+                <a class="nav-button" href="<%=request.getContextPath()%>/goals">Goals</a>
+                <a class="nav-button" href="<%=request.getContextPath()%>/calendar">Calendar</a>
+                <a class="nav-button ghost" href="<%=request.getContextPath()%>/logout">Logout</a>
                 <div class="header-icon"><%=ICON_STAR%>
                 </div>
             </div>
@@ -95,44 +83,43 @@
                     <h2 class="section-title">Your Habits</h2>
                     <p class="section-subtitle">Tap a habit to toggle completion</p>
                 </div>
-                <button class="add-button" onclick="location.href='<%=request.getContextPath()%>/habits/new'">
+                <a class="add-button" href="<%=request.getContextPath()%>/habits/new">
                     <%=ICON_PLUS%>
-                </button>
+                </a>
             </div>
 
             <div class="habits-list">
                 <%
-                    if (habitsList.isEmpty()) {
+                    if (habitList.isEmpty()) {
                 %>
                 <div style="color:#6b7280;">No habits found. Create one using the + button.</div>
                 <%
                 } else {
-                    for (Habit h : habitsList) {
+                    for (Habit h : habitList) {
                 %>
-                <div class="habit-card" onclick="toggleHabit('<%=h.getId()%>', <%=h.isCompleted()%>)">
-                    <div class="habit-icon <%= h.isCompleted() ? "completed" : "" %>">
+                <div class="habit-card">
+                    <%-- Make the left part of the card a plain link that performs the toggle via server-side endpoint --%>
+                    <a class="habit-body" href="<%=request.getContextPath()%>/<%= h.isCompleted() ? "habits/incomplete" : "habits/complete" %>?id=<%=h.getId()%>">
+                        <div class="habit-icon <%= h.isCompleted() ? "completed" : "" %>"></div>
 
-                    </div>
-
-                    <%--name, frequency and streak--%>
-                    <div class="habit-info">
-                        <h3 class="habit-name <%= h.isCompleted() ? "completed" : "" %>"><%=h.getName()%>
-                        </h3>
-                        <p class="habit-streak">Frequency: <%=h.getFrequency()%> &bull; Streak: <%=h.getStreak()%>
-                        </p>
-                        <p class="habit-description"><%=h.getDescription()%>
-                        </p>
-                    </div>
+                        <%--name, frequency and streak--%>
+                        <div class="habit-info">
+                            <h3 class="habit-name <%= h.isCompleted() ? "completed" : "" %>"><%=h.getName()%></h3>
+                            <p class="habit-streak">Frequency: <%=h.getFrequency()%> &bull; Streak: <%=h.getStreak()%></p>
+                            <p class="habit-description"><%=h.getDescription()%></p>
+                        </div>
+                    </a>
 
                     <div class="habit-actions">
-                        <button class="habit-action-button" title="Edit"
-                                onclick="event.stopPropagation(); goEdit('<%=h.getId()%>')">
+                        <a class="habit-action-button" title="Edit" href="<%=request.getContextPath()%>/habits/edit?id=<%=h.getId()%>">
                             <%=ICON_PENCIL%>
-                        </button>
-                        <button class="habit-action-button" title="Delete"
-                                onclick="event.stopPropagation(); deleteHabit('<%=h.getId()%>')">
-                            <%=ICON_TRASH%>
-                        </button>
+                        </a>
+                        <form method="post" action="<%=request.getContextPath()%>/habits/delete" style="display:inline; margin:0; padding:0;">
+                            <input type="hidden" name="id" value="<%=h.getId()%>" />
+                            <button class="habit-action-button" title="Delete" type="submit" style="background:none;border:none;padding:0;">
+                                <%=ICON_TRASH%>
+                            </button>
+                        </form>
                         <div class="habit-check">
                             <%= h.isCompleted() ? ICON_CIRCLE_CHECK : ICON_CIRCLE %>
                         </div>
@@ -146,45 +133,5 @@
         </section>
     </div>
 </div>
-
-<script>
-    // Toggle now calls your SERVLET endpoints, then reloads the page.
-    function toggleHabit(id, completed) {
-        if (!id) return;
-        // Determine which endpoint to call based on current completion state
-        const endpoint = completed ? 'habits/incomplete' : 'habits/complete';
-        const url = '<%=request.getContextPath()%>/' + endpoint;
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = url;
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'id';
-        input.value = id;
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-    }
-
-    function goEdit(id) {
-        if (!id) return;
-        window.location.href = '<%=request.getContextPath()%>/habits/edit?id=' + encodeURIComponent(id);
-    }
-
-    function deleteHabit(id) {
-        if (!confirm('Delete this habit? This action cannot be undone.')) return;
-        const url = '<%=request.getContextPath()%>/habits/delete';
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = url;
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'id';
-        input.value = id;
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-    }
-</script>
 </body>
 </html>
