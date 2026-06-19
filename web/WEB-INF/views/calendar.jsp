@@ -1,438 +1,960 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page isELIgnored="true" %>
+
 <%@ page import="java.util.List" %>
+
+<%@ page import="java.util.Calendar" %>
+
+<%@ page import="java.text.SimpleDateFormat" %>
+
 <%@ page import="model.Habit" %>
+
 <%@ page import="model.CalendarItem" %>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="<%=request.getContextPath()%>/css/calendar_style.css">
-    <title>Calendar • HabiTap</title>
 
-    <%!
-        private String escJs(String s) {
-            if (s == null) return "";
-            return s.replace("\\", "\\\\")
-                    .replace("'", "\\'")
-                    .replace("\"", "\\\"")
-                    .replace("\r", "")
-                    .replace("\n", "\\n");
+<%!
+
+    public String ymd(Calendar c) {
+
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+
+        return df.format(c.getTime());
+
+    }
+
+
+    public String monthYearName(Calendar c) {
+
+        SimpleDateFormat df = new SimpleDateFormat("MMMM yyyy");
+
+        return df.format(c.getTime());
+
+    }
+
+
+    public List<CalendarItem> itemsForDate(String dateStr, List<CalendarItem> itemsList) {
+
+        List<CalendarItem> result = new java.util.ArrayList<>();
+
+        for (CalendarItem item : itemsList) {
+
+            if (item.getDate().toString().equals(dateStr)) {
+
+                result.add(item);
+
+            }
+
         }
-    %>
-</head>
-<body>
-<div id="app-root"></div>
 
-<%
-    List<Habit> habitsList = (List<Habit>) request.getAttribute("habits");
-    if (habitsList == null) habitsList = java.util.Collections.emptyList();
+        return result;
 
-    List<CalendarItem> itemsList = (List<CalendarItem>) request.getAttribute("calendarItems");
-    if (itemsList == null) itemsList = java.util.Collections.emptyList();
+    }
+
+
+    public String getGoalName(int goalId, List<Habit> habitList) {
+
+        for (Habit h : habitList) {
+
+            if (h.getGoalId() == goalId) {
+
+                return h.getGoalName() != null ? h.getGoalName() : "Goal " + goalId;
+
+            }
+
+        }
+
+        return "Goal " + goalId;
+
+    }
+
+
+    public boolean isTodayCell(String dateStr) {
+
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+
+        return dateStr.equals(df.format(Calendar.getInstance().getTime()));
+
+    }
+
+
+    public Calendar getStartOfGrid(Calendar monthCal) {
+
+        Calendar first = Calendar.getInstance();
+
+        first.set(monthCal.get(Calendar.YEAR), monthCal.get(Calendar.MONTH), 1);
+
+
+        Calendar gridStart = Calendar.getInstance();
+
+        gridStart.setTime(first.getTime());
+
+        gridStart.add(Calendar.DAY_OF_MONTH, -(gridStart.get(Calendar.DAY_OF_WEEK) - 1));
+
+        return gridStart;
+
+    }
+
 %>
 
-<script>
-    const ctx = "<%=request.getContextPath()%>";
 
-    const weekdayLabels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+<!DOCTYPE html>
 
-    const habits = [
-        <% for (int i = 0; i < habitsList.size(); i++) {
-             Habit h = habitsList.get(i);
-        %>
-        {
-            id: <%=h.getId()%>,
-            name: "<%=escJs(h.getName())%>",
-            description: "<%=escJs(h.getDescription())%>",
-            dueDate: "<%=h.getDueDate()%>",
-            completed: <%=h.isCompleted()%>,
-            goalId: <%=h.getGoalId() == null ? "null" : h.getGoalId()%>,
-            goalName: <%=h.getGoalName() == null ? "null" : "'" + escJs(h.getGoalName()) + "'" %>,
-            goalColor: <%=h.getGoalColor() == null ? "null" : "'" + escJs(h.getGoalColor()) + "'" %>
-        }<%= (i < habitsList.size() - 1) ? "," : "" %>
-        <% } %>
-    ];
+<html lang="en">
 
-    let calendarItems = [
-        <% for (int i = 0; i < itemsList.size(); i++) {
-             CalendarItem it = itemsList.get(i);
-        %>
-        {
-            id: <%=it.getId()%>,
-            type: "<%=it.getType()%>",
-            title: "<%=escJs(it.getTitle())%>",
-            date: "<%=it.getDate()%>",
-            startTime: <%=it.getStartTime() == null ? "null" : "'" + it.getStartTime().toString() + "'" %>,
-            endTime: <%=it.getEndTime() == null ? "null" : "'" + it.getEndTime().toString() + "'" %>,
-            category: <%=it.getCategory() == null ? "null" : "'" + escJs(it.getCategory()) + "'" %>,
-            description: <%=it.getDescription() == null ? "null" : "'" + escJs(it.getDescription()) + "'" %>,
-            priority: <%=it.getPriority() == null ? "null" : "'" + it.getPriority().name() + "'" %>
-        }<%= (i < itemsList.size() - 1) ? "," : "" %>
-        <% } %>
-    ];
+<head>
 
-    function ymd(d) {
-        const y = d.getFullYear();
-        const m = String(d.getMonth()+1).padStart(2,'0');
-        const day = String(d.getDate()).padStart(2,'0');
-        return `${y}-${m}-${day}`;
-    }
+    <jsp:include page="/WEB-INF/views/includes/head.jsp"/>
 
-    function sameDay(a, b) { return a === b; }
+    <title>Calendar • HabiTap</title>
 
-    function monthName(d) {
-        return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
-    }
+</head>
 
-    function addMonths(d, delta) {
-        return new Date(d.getFullYear(), d.getMonth() + delta, 1);
-    }
+<body class="bg-light">
 
-    function startOfGrid(monthDate) {
-        const first = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-        const day = first.getDay(); // 0..6 (Sun..Sat)
-        const gridStart = new Date(first);
-        gridStart.setDate(first.getDate() - day);
-        return gridStart;
-    }
 
-    function isTodayCell(dateStr) {
-        return dateStr === ymd(new Date());
-    }
+<%
 
-    function habitsForDate(dateStr) {
-        return habits.filter(h => h.dueDate === dateStr);
-    }
+    String viewMode = request.getParameter("view") != null ? request.getParameter("view") : "month";
 
-    function itemsForDate(dateStr) {
-        return calendarItems.filter(i => i.date === dateStr);
-    }
+    String monthParam = request.getParameter("month");
 
-    function badgeColorForHabit(h) {
-        return h.goalColor || "rgba(148,163,184,.55)";
-    }
+    String goalParam = request.getParameter("goal");
 
-    // ====== Modal state ======
-    let viewMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    let modal = { open: false, mode: "create", activeDate: null, type: "EVENT", editItemId: null };
+    String selectedDateStr = request.getParameter("date");
 
-    function openCreateModal(dateStr) {
-        modal = { open: true, mode: "create", activeDate: dateStr, type: "EVENT", editItemId: null };
-        render();
-        hydrateModalDefaults();
-    }
+    String selectedTimeStr = request.getParameter("time");
 
-    function openEditModal(itemId) {
-        const item = calendarItems.find(x => x.id === itemId);
-        if (!item) return;
-        modal = { open: true, mode: "edit", activeDate: item.date, type: item.type, editItemId: itemId };
-        render();
-        hydrateModalForEdit(item);
-    }
+    String actionParam = request.getParameter("action");
 
-    function closeModal() {
-        modal.open = false;
-        render();
-    }
 
-    function setModalType(t) {
-        modal.type = t;
-        render();
-        if (modal.mode === "create") hydrateModalDefaults();
-        else {
-            const item = calendarItems.find(x => x.id === modal.editItemId);
-            if (item) hydrateModalForEdit(item);
-        }
-    }
+    List<Habit> habitList = (List<Habit>) request.getAttribute("habitList");
 
-    // ====== Network ======
-    async function postForm(url, data) {
-        const fd = new URLSearchParams();
-        Object.keys(data).forEach(k => {
-            if (data[k] === undefined || data[k] === null) return;
-            fd.append(k, data[k]);
-        });
-        const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: fd.toString()
-        });
-        const json = await res.json().catch(() => null);
-        if (!res.ok) throw new Error((json && json.error) ? json.error : "Request failed");
-        if (json && json.ok === false) throw new Error(json.error || "Request failed");
-        return json;
-    }
+    if (habitList == null) habitList = java.util.Collections.emptyList();
 
-    async function createItemFromModal() {
-        const data = readModalValues();
-        const payload = { type: modal.type, ...data };
-        const out = await postForm(ctx + "/calendar/items/create", payload);
-        calendarItems.push(out.item);
-        closeModal();
-    }
 
-    async function updateItemFromModal() {
-        const data = readModalValues();
-        const payload = { id: modal.editItemId, ...data };
-        const out = await postForm(ctx + "/calendar/items/update", payload);
-        calendarItems = calendarItems.map(i => i.id === out.item.id ? out.item : i);
-        closeModal();
-    }
+    List<CalendarItem> itemsList = (List<CalendarItem>) request.getAttribute("calendarItems");
 
-    async function deleteItem(itemId) {
-        if (!confirm("Delete this item?")) return;
-        await postForm(ctx + "/calendar/items/delete", { id: itemId });
-        calendarItems = calendarItems.filter(i => i.id !== itemId);
-        closeModal();
-    }
+    if (itemsList == null) itemsList = java.util.Collections.emptyList();
 
-    // ====== Modal helpers ======
-    function readModalValues() {
-        const title = document.querySelector('[data-field="title"]').value.trim();
-        const date = document.querySelector('[data-field="date"]').value;
-        const description = document.querySelector('[data-field="description"]').value.trim();
 
-        if (modal.type === "EVENT") {
-            const startTime = document.querySelector('[data-field="startTime"]').value;
-            const endTime = document.querySelector('[data-field="endTime"]').value;
-            const category = document.querySelector('[data-field="category"]').value.trim();
-            return {
-                title,
-                date,
-                startTime: startTime || null,
-                endTime: endTime || null,
-                category: category || null,
-                description: description || null
-            };
+    Calendar viewCalendar = Calendar.getInstance();
+
+    if (monthParam != null && !monthParam.isEmpty()) {
+
+        try {
+
+            String[] parts = monthParam.split("-");
+
+            viewCalendar.set(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]) - 1, 1);
+
+        } catch (Exception e) {
         }
 
-        const priority = document.querySelector('[data-field="priority"]').value;
-        return {
-            title,
-            date,
-            priority,
-            description: description || null
-        };
+    } else {
+
+        viewCalendar.set(Calendar.DAY_OF_MONTH, 1);
+
     }
 
-    function hydrateModalDefaults() {
-        const dateInput = document.querySelector('[data-field="date"]');
-        if (dateInput && modal.activeDate) dateInput.value = modal.activeDate;
-    }
 
-    function hydrateModalForEdit(item) {
-        const set = (sel, v) => {
-            const el = document.querySelector(sel);
-            if (!el) return;
-            el.value = v == null ? "" : v;
-        };
-        set('[data-field="title"]', item.title);
-        set('[data-field="date"]', item.date);
-        set('[data-field="description"]', item.description);
-        if (item.type === "EVENT") {
-            set('[data-field="startTime"]', item.startTime);
-            set('[data-field="endTime"]', item.endTime);
-            set('[data-field="category"]', item.category);
-        } else {
-            set('[data-field="priority"]', item.priority || "MEDIUM");
+    Integer selectedGoalId = null;
+
+    if (goalParam != null && !goalParam.isEmpty()) {
+
+        try {
+
+            selectedGoalId = Integer.parseInt(goalParam);
+
+        } catch (Exception e) {
         }
+
     }
 
-    // ====== Rendering ======
-    function renderTopbar() {
-        return `
-          <div class="topbar">
-            <div>
-              <div class="title">Calendar</div>
-              <div class="subtitle">Upcoming habits + your events/tasks</div>
-            </div>
-            <div class="top-actions">
-              <a class="btn btn-secondary" href="${ctx}/habits">Habits</a>
-              <a class="btn btn-secondary" href="${ctx}/goals">Goals</a>
-              <a class="btn btn-ghost" href="${ctx}/logout">Logout</a>
-            </div>
-          </div>
-        `;
+
+    List<Habit> filteredHabits = new java.util.ArrayList<>();
+
+    java.util.Set<Integer> availableGoalIds = new java.util.LinkedHashSet<>();
+
+    for (Habit h : habitList) {
+
+        availableGoalIds.add(h.getGoalId());
+
+        if (selectedGoalId == null || h.getGoalId() == selectedGoalId) {
+
+            filteredHabits.add(h);
+
+        }
+
     }
 
-    function renderCalendarHeader() {
-        return `
-          <div class="cal-head">
-            <button class="icon-btn" onclick="viewMonth = addMonths(viewMonth,-1); render()" title="Previous month">‹</button>
-            <div class="month-label">${monthName(viewMonth)}</div>
-            <button class="icon-btn" onclick="viewMonth = addMonths(viewMonth,1); render()" title="Next month">›</button>
-            <div class="spacer"></div>
-            <button class="btn btn-secondary" onclick="viewMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1); render()">Today</button>
-          </div>
-          <div class="weekdays">
-            ${weekdayLabels.map(d => `<div class="weekday">${d}</div>`).join('')}
-          </div>
-        `;
-    }
+    String monthYearStr = (viewCalendar.get(Calendar.YEAR)) + "-" +
 
-    function renderCell(dateObj, inMonth) {
-        const dateStr = ymd(dateObj);
-        const day = dateObj.getDate();
+            String.format("%02d", (viewCalendar.get(Calendar.MONTH) + 1));
 
-        const dayHabits = habitsForDate(dateStr);
-        const dayItems = itemsForDate(dateStr);
+    String goalQuery = selectedGoalId != null ? "&goal=" + selectedGoalId : "";
 
-        const maxShown = 3;
-        const shownHabits = dayHabits.slice(0, maxShown);
-        const hiddenCount = Math.max(0, dayHabits.length - maxShown);
+%>
 
-        return `
-          <div class="cell ${inMonth ? "" : "muted"}" onclick="openCreateModal('${dateStr}')">
-            <div class="cell-top">
-              <div class="day-num">
-                <span class="day-circle ${isTodayCell(dateStr) ? "today" : ""}">${day}</span>
-              </div>
+
+<jsp:include page="/WEB-INF/views/includes/navbar.jsp">
+
+    <jsp:param name="active" value="calendar"/>
+
+</jsp:include>
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+
+        <div>
+
+            <h1 class="h3 fw-bold mb-1">Calendar</h1>
+
+            <p class="text-muted mb-0">Events, tasks, and habits</p>
+
+        </div>
+
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+
+            <form method="get" action="<%= request.getContextPath() %>/calendar" class="m-0">
+
+                <input type="hidden" name="view" value="<%= viewMode %>"/>
+
+                <input type="hidden" name="month" value="<%= monthYearStr %>"/>
+
+                <select name="goal" class="form-select form-select-sm" onchange="this.form.submit();"
+                        style="min-width:10rem;">
+
+                    <option value="">All Goals</option>
+
+                    <% for (Integer gid : availableGoalIds) {
+
+                        String selected = (selectedGoalId != null && selectedGoalId == gid) ? " selected" : "";
+
+                    %>
+
+                    <option value="<%= gid %>"<%= selected %>><%= getGoalName(gid, habitList) %>
+                    </option>
+
+                    <% } %>
+
+                </select>
+
+            </form>
+
+
+            <div class="btn-group btn-group-sm" role="group" aria-label="View mode">
+
+                <% String[] views = {"day", "week", "month", "schedule"};
+
+                    for (String v : views) {
+
+                        String activeClass = viewMode.equals(v) ? "btn-primary" : "btn-outline-secondary";
+
+                %>
+
+                <a href="<%= request.getContextPath() %>/calendar?view=<%= v %>&month=<%= monthYearStr %><%= goalQuery %>"
+
+                   class="btn <%= activeClass %>">
+
+                    <%= v.substring(0, 1).toUpperCase() + v.substring(1) %>
+
+                </a>
+
+                <% } %>
+
             </div>
-            <div class="pill-area" onclick="event.stopPropagation()">
-              ${shownHabits.map(h => `
-                <div class="badge ${h.completed ? "done" : ""}" style="border-left-color:${badgeColorForHabit(h)}" title="${h.goalName ? (h.goalName + " • ") : ""}${h.name}">
-                  <a class="badge-link" href="${ctx}/habits/edit?id=${encodeURIComponent(h.id)}">${h.name}</a>
+
+        </div>
+
+    </div>
+
+
+    <% if (viewMode.equals("month")) { %>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+
+                <%
+
+                    Calendar prevMonth = Calendar.getInstance();
+
+                    prevMonth.setTime(viewCalendar.getTime());
+
+                    prevMonth.add(Calendar.MONTH, -1);
+
+                    String prevMonthStr = prevMonth.get(Calendar.YEAR) + "-" +
+
+                            String.format("%02d", (prevMonth.get(Calendar.MONTH) + 1));
+
+
+                    Calendar nextMonth = Calendar.getInstance();
+
+                    nextMonth.setTime(viewCalendar.getTime());
+
+                    nextMonth.add(Calendar.MONTH, 1);
+
+                    String nextMonthStr = nextMonth.get(Calendar.YEAR) + "-" +
+
+                            String.format("%02d", (nextMonth.get(Calendar.MONTH) + 1));
+
+                %>
+
+                <a href="<%= request.getContextPath() %>/calendar?view=month&month=<%= prevMonthStr %><%= goalQuery %>"
+
+                   class="btn btn-outline-secondary btn-sm">&lsaquo;</a>
+
+
+                <h2 class="h5 fw-semibold mb-0"><%= monthYearName(viewCalendar) %>
+                </h2>
+
+
+                <div class="d-flex gap-2">
+
+                    <a href="<%= request.getContextPath() %>/calendar?view=month&month=<%= nextMonthStr %><%= goalQuery %>"
+
+                       class="btn btn-outline-secondary btn-sm">&rsaquo;</a>
+
+                    <a href="<%= request.getContextPath() %>/calendar?view=month<%= goalQuery %>"
+
+                       class="btn btn-primary btn-sm">Today</a>
+
                 </div>
-              `).join('')}
-              ${hiddenCount > 0 ? `<button class="more" onclick="openCreateModal('${dateStr}')">${hiddenCount}+ more</button>` : ``}
 
-              ${dayItems.map(i => `
-                <button class="pill ${i.type === "TASK" ? "task" : "event"}" onclick="openEditModal(${i.id})" title="Click to edit">
-                  <span class="pill-dot"></span>
-                  ${i.title}
+            </div>
+
+
+            <div class="cal-grid mb-1">
+
+                <% String[] weekdays = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+                    for (String wd : weekdays) { %>
+
+                <div class="cal-weekday"><%= wd %>
+                </div>
+
+                <% } %>
+
+            </div>
+
+
+            <div class="cal-grid">
+
+                <%
+
+                    Calendar gridStart = getStartOfGrid(viewCalendar);
+
+                    for (int i = 0; i < 42; i++) {
+
+                        Calendar cellDate = Calendar.getInstance();
+
+                        cellDate.setTime(gridStart.getTime());
+
+                        cellDate.add(Calendar.DAY_OF_MONTH, i);
+
+
+                        boolean inMonth = cellDate.get(Calendar.MONTH) == viewCalendar.get(Calendar.MONTH);
+
+                        String dateStr = ymd(cellDate);
+
+                        int dayNum = cellDate.get(Calendar.DAY_OF_MONTH);
+
+                        List<CalendarItem> dayItems = itemsForDate(dateStr, itemsList);
+
+                        boolean isToday = isTodayCell(dateStr);
+
+                %>
+
+                <div class="cal-cell<%= inMonth ? "" : " out-month" %>">
+
+                    <div class="fw-semibold mb-1">
+
+                        <% if (isToday) { %>
+
+                        <span class="cal-today-badge"><%= dayNum %></span>
+
+                        <% } else { %>
+
+                        <%= dayNum %>
+
+                        <% } %>
+
+                    </div>
+
+                    <%
+
+                        int shown = 0;
+
+                        for (CalendarItem item : dayItems) {
+
+                            if (shown >= 2) break;
+
+                            String eventClass = item.getType().name().equals("TASK") ? "cal-event-task" : "cal-event-event";
+
+                    %>
+
+                    <div class="cal-event <%= eventClass %>">
+
+                        <a href="<%= request.getContextPath() %>/calendar?view=<%= viewMode %>&month=<%= monthYearStr %>&action=edit&id=<%= item.getId() %><%= goalQuery %>"
+
+                           class="text-decoration-none text-dark fw-medium">
+
+                            <%= item.getTitle().length() > 12 ? item.getTitle().substring(0, 12) + "..." : item.getTitle() %>
+
+                        </a>
+
+                    </div>
+
+                    <%
+
+                            shown++;
+
+                        }
+
+                        if (dayItems.size() > 2) {
+
+                    %>
+
+                    <div class="small text-muted"><%= (dayItems.size() - 2) %>+ more</div>
+
+                    <% } %>
+
+                    <a href="<%= request.getContextPath() %>/calendar?view=<%= viewMode %>&month=<%= monthYearStr %>&action=create&date=<%= dateStr %><%= goalQuery %>"
+
+                       class="small text-primary text-decoration-none">+ Add</a>
+
+                </div>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <% } else if (viewMode.equals("week")) { %>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <%
+
+                Calendar today = Calendar.getInstance();
+
+                Calendar sunday = Calendar.getInstance();
+
+                sunday.setTime(today.getTime());
+
+                sunday.add(Calendar.DAY_OF_WEEK, -(sunday.get(Calendar.DAY_OF_WEEK) - 1));
+
+            %>
+
+            <h2 class="h5 fw-semibold mb-3">Week of <%= new SimpleDateFormat("MMM d, yyyy").format(sunday.getTime()) %>
+            </h2>
+
+
+            <div class="week-grid">
+
+                <%
+
+                    for (int i = 0; i < 7; i++) {
+
+                        Calendar dayForWeek = Calendar.getInstance();
+
+                        dayForWeek.setTime(sunday.getTime());
+
+                        dayForWeek.add(Calendar.DAY_OF_MONTH, i);
+
+                        String weekDateStr = ymd(dayForWeek);
+
+                        List<CalendarItem> weekDayItems = itemsForDate(weekDateStr, itemsList);
+
+                %>
+
+                <div class="card h-100">
+
+                    <div class="card-body p-2">
+
+                        <strong class="small d-block mb-2">
+
+                            <%= new SimpleDateFormat("EEE, M/d").format(dayForWeek.getTime()) %>
+
+                        </strong>
+
+
+                        <% for (CalendarItem item : weekDayItems) { %>
+
+                        <div class="cal-event cal-event-event mb-1">
+
+                            <a href="<%= request.getContextPath() %>/calendar?view=week&action=edit&id=<%= item.getId() %><%= goalQuery %>"
+
+                               class="text-decoration-none text-primary fw-medium small">
+
+                                <%= item.getTitle() %>
+
+                            </a>
+
+                        </div>
+
+                        <% } %>
+
+
+                        <a href="<%= request.getContextPath() %>/calendar?view=week&action=create&date=<%= weekDateStr %><%= goalQuery %>"
+
+                           class="btn btn-outline-secondary btn-sm w-100 mt-2">+ Add</a>
+
+                    </div>
+
+                </div>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <% } else if (viewMode.equals("day")) { %>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <%
+
+                Calendar dayView = Calendar.getInstance();
+
+                String dayDateStr = ymd(dayView);
+
+                List<CalendarItem> dayViewItems = itemsForDate(dayDateStr, itemsList);
+
+            %>
+
+            <h2 class="h5 fw-semibold mb-3">
+
+                <%= new SimpleDateFormat("EEEE, MMMM d, yyyy").format(dayView.getTime()) %>
+
+            </h2>
+
+
+            <h3 class="h6 text-secondary mb-2">Events &amp; Tasks</h3>
+
+            <% if (dayViewItems.isEmpty()) { %>
+
+            <p class="text-muted">No events or tasks for today</p>
+
+            <% } else {
+
+                for (CalendarItem item : dayViewItems) {
+
+            %>
+
+            <div class="card bg-light mb-2">
+
+                <div class="card-body py-2 d-flex justify-content-between align-items-center">
+
+                    <div>
+
+                        <strong><%= item.getTitle() %>
+                        </strong>
+
+                        <span class="text-muted"> - <%= item.getType().name() %></span>
+
+                        <% if (item.getStartTime() != null) { %>
+
+                        <span class="text-muted"> @ <%= item.getStartTime() %></span>
+
+                        <% } %>
+
+                    </div>
+
+                    <a href="<%= request.getContextPath() %>/calendar?view=day&action=edit&id=<%= item.getId() %><%= goalQuery %>"
+
+                       class="btn btn-sm btn-outline-primary">Edit</a>
+
+                </div>
+
+            </div>
+
+            <% }
+            } %>
+
+
+            <h3 class="h6 text-secondary mt-4 mb-2">Time Slots</h3>
+
+            <div class="list-group" style="max-height:60vh; overflow-y:auto;">
+
+                <% for (int hour = 0; hour < 24; hour++) {
+
+                    String hourStr = String.format("%02d", hour);
+
+                %>
+
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+
+                    <strong><%= hourStr %>:00</strong>
+
+                    <a href="<%= request.getContextPath() %>/calendar?view=day&action=create&date=<%= dayDateStr %>&time=<%= hourStr %>:00<%= goalQuery %>"
+
+                       class="btn btn-sm btn-link">+ Add Event</a>
+
+                </div>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <% } else if (viewMode.equals("schedule")) { %>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h2 class="h5 fw-semibold mb-3">Schedule</h2>
+
+
+            <h3 class="h6 text-secondary mb-2">Your Habits (<%= filteredHabits.size() %>)</h3>
+
+            <% if (filteredHabits.isEmpty()) { %>
+
+            <p class="text-muted">No habits</p>
+
+            <% } else {
+
+                for (Habit h : filteredHabits) {
+
+            %>
+
+            <div class="card border-start border-success border-4 mb-2">
+
+                <div class="card-body py-2">
+
+                    <div class="fw-semibold"><%= h.getName() %>
+                    </div>
+
+                    <div class="small text-muted">
+
+                        Frequency: <%= h.getFrequency() %> |
+
+                        Goal: <%= h.getGoalName() != null ? h.getGoalName() : "None" %> |
+
+                        <%= h.isCompleted() ? "&#10003; Done" : "Pending" %>
+
+                    </div>
+
+                    <div class="small text-secondary mt-1"><%= h.getDescription() %>
+                    </div>
+
+                    <a href="<%= request.getContextPath() %>/habits/edit?id=<%= h.getId() %>"
+
+                       class="small text-primary text-decoration-none">Edit &rarr;</a>
+
+                </div>
+
+            </div>
+
+            <% }
+            } %>
+
+
+            <h3 class="h6 text-secondary mt-4 mb-2">Upcoming Events/Tasks (Next 2 Weeks)</h3>
+
+            <%
+
+                Calendar scheduleToday = Calendar.getInstance();
+
+                for (int dayOffset = 0; dayOffset < 14; dayOffset++) {
+
+                    Calendar scheduleDate = Calendar.getInstance();
+
+                    scheduleDate.setTime(scheduleToday.getTime());
+
+                    scheduleDate.add(Calendar.DAY_OF_MONTH, dayOffset);
+
+                    String scheduleDateStr = ymd(scheduleDate);
+
+                    List<CalendarItem> scheduleDayItems = itemsForDate(scheduleDateStr, itemsList);
+
+
+                    if (!scheduleDayItems.isEmpty()) {
+
+            %>
+
+            <div class="mb-3">
+
+                <div class="fw-semibold mb-1">
+
+                    <%= new SimpleDateFormat("EEE, MMM d").format(scheduleDate.getTime()) %>
+
+                </div>
+
+                <% for (CalendarItem item : scheduleDayItems) { %>
+
+                <div class="card border-start border-primary border-3 mb-1">
+
+                    <div class="card-body py-2">
+
+                        <a href="<%= request.getContextPath() %>/calendar?view=schedule&action=edit&id=<%= item.getId() %><%= goalQuery %>"
+
+                           class="text-decoration-none text-primary fw-medium small">
+
+                            <strong><%= item.getTitle() %>
+                            </strong>
+
+                        </a>
+
+                        <% if (item.getStartTime() != null) { %>
+
+                        <span class="small text-muted"> @ <%= item.getStartTime() %></span>
+
+                        <% } %>
+
+                        <span class="small text-muted"> - <%= item.getType() %></span>
+
+                    </div>
+
+                </div>
+
+                <% } %>
+
+            </div>
+
+            <% }
+            } %>
+
+        </div>
+
+    </div>
+
+    <% } %>
+
+
+    <% if ("create".equals(actionParam) || "edit".equals(actionParam)) {
+
+        CalendarItem editItem = null;
+
+        if ("edit".equals(actionParam) && request.getParameter("id") != null) {
+
+            try {
+
+                int itemId = Integer.parseInt(request.getParameter("id"));
+
+                for (CalendarItem item : itemsList) {
+
+                    if (item.getId() == itemId) {
+
+                        editItem = item;
+
+                        break;
+
+                    }
+
+                }
+
+            } catch (Exception e) {
+            }
+
+        }
+
+
+        String formDate = selectedDateStr != null ? selectedDateStr : ymd(Calendar.getInstance());
+
+        String formTime = selectedTimeStr != null ? selectedTimeStr : "";
+
+        String formType = editItem != null ? editItem.getType().name() : "EVENT";
+
+    %>
+
+    <div class="card shadow-sm mt-4">
+
+        <div class="card-body">
+
+            <h3 class="h5 fw-semibold mb-3">
+
+                <%= "edit".equals(actionParam) ? "Edit Item" : "Create New Item" %>
+
+            </h3>
+
+
+            <form method="post"
+                  action="<%= request.getContextPath() %>/calendar/items/<%= "edit".equals(actionParam) ? "update" : "create" %>"
+                  class="row g-3" style="max-width:540px;">
+
+                <% if ("edit".equals(actionParam)) { %>
+
+                <input type="hidden" name="id" value="<%= editItem.getId() %>"/>
+
+                <% } %>
+
+                <input type="hidden" name="returnView" value="<%= viewMode %>"/>
+
+                <% if (selectedGoalId != null) { %>
+
+                <input type="hidden" name="goal" value="<%= selectedGoalId %>"/>
+
+                <% } %>
+
+
+                <div class="col-12">
+
+                    <label class="form-label fw-semibold">Item Type</label>
+
+                    <select name="type" class="form-select">
+
+                        <option value="EVENT" <%= "EVENT".equals(formType) ? "selected" : "" %>>Event</option>
+
+                        <option value="TASK" <%= "TASK".equals(formType) ? "selected" : "" %>>Task</option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <label class="form-label fw-semibold">Title</label>
+
+                    <input type="text" name="title" class="form-control"
+
+                           value="<%= editItem != null ? editItem.getTitle() : "" %>"
+
+                           maxlength="120" required/>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <label class="form-label fw-semibold">Date</label>
+
+                    <input type="date" name="date" class="form-control"
+
+                           value="<%= editItem != null ? editItem.getDate().toString() : formDate %>" required/>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label fw-semibold">Start Time</label>
+
+                    <input type="time" name="startTime" class="form-control"
+
+                           value="<%= editItem != null && editItem.getStartTime() != null ? editItem.getStartTime().toString() : formTime %>"/>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label fw-semibold">End Time</label>
+
+                    <input type="time" name="endTime" class="form-control"
+
+                           value="<%= editItem != null && editItem.getEndTime() != null ? editItem.getEndTime().toString() : "" %>"/>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <label class="form-label fw-semibold">Category</label>
+
+                    <input type="text" name="category" class="form-control"
+
+                           value="<%= editItem != null && editItem.getCategory() != null ? editItem.getCategory() : "" %>"
+
+                           maxlength="50" placeholder="e.g., Study / Work / Health"/>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <label class="form-label fw-semibold">Priority (for tasks)</label>
+
+                    <select name="priority" class="form-select">
+
+                        <option value="LOW" <%= editItem != null && editItem.getPriority() != null && editItem.getPriority().name().equals("LOW") ? "selected" : "" %>>
+                            Low
+                        </option>
+
+                        <option value="MEDIUM" <%= editItem == null || editItem.getPriority() == null || editItem.getPriority().name().equals("MEDIUM") ? "selected" : "" %>>
+                            Medium
+                        </option>
+
+                        <option value="HIGH" <%= editItem != null && editItem.getPriority() != null && editItem.getPriority().name().equals("HIGH") ? "selected" : "" %>>
+                            High
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <label class="form-label fw-semibold">Description</label>
+
+                    <textarea name="description" class="form-control" rows="3" maxlength="500"
+                              placeholder="Optional"><%= editItem != null && editItem.getDescription() != null ? editItem.getDescription() : "" %></textarea>
+
+                </div>
+
+
+                <div class="col-12 d-flex flex-wrap gap-2">
+
+                    <button type="submit" class="btn btn-primary">
+
+                        <%= "edit".equals(actionParam) ? "Update" : "Create" %>
+
+                    </button>
+
+                    <a href="<%= request.getContextPath() %>/calendar?view=<%= viewMode %><%= goalQuery %>"
+
+                       class="btn btn-outline-secondary">Cancel</a>
+
+                </div>
+
+            </form>
+
+            <% if ("edit".equals(actionParam)) { %>
+
+            <form method="post" action="<%= request.getContextPath() %>/calendar/items/delete" class="mt-2">
+
+                <input type="hidden" name="id" value="<%= editItem.getId() %>"/>
+
+                <button type="submit" class="btn btn-danger"
+
+                        onclick="return confirm('Delete this item?');">Delete
                 </button>
-              `).join('')}
-            </div>
-          </div>
-        `;
-    }
 
-    function renderGrid() {
-        const start = startOfGrid(viewMonth);
-        const days = [];
-        for (let i = 0; i < 42; i++) {
-            const d = new Date(start);
-            d.setDate(start.getDate() + i);
-            const inMonth = d.getMonth() === viewMonth.getMonth();
-            days.push(renderCell(d, inMonth));
-        }
+            </form>
 
-        return `
-          <div class="calendar">
-            ${renderCalendarHeader()}
-            <div class="grid">
-              ${days.join('')}
-            </div>
-          </div>
-        `;
-    }
+            <% } %>
 
-    function renderModal() {
-        if (!modal.open) return "";
+        </div>
 
-        const isEdit = modal.mode === "edit";
-        const activeType = modal.type;
-        const title = isEdit ? "Edit" : "Add";
+    </div>
 
-        const eventFields = `
-          <div class="field">
-            <label>Title</label>
-            <input data-field="title" type="text" maxlength="120" required />
-          </div>
-          <div class="field">
-            <label>Date</label>
-            <input data-field="date" type="date" required />
-          </div>
-          <div class="two">
-            <div class="field">
-              <label>Start Time</label>
-              <input data-field="startTime" type="time" />
-            </div>
-            <div class="field">
-              <label>End Time</label>
-              <input data-field="endTime" type="time" />
-            </div>
-          </div>
-          <div class="field">
-            <label>Category</label>
-            <input data-field="category" type="text" maxlength="50" placeholder="e.g., Study / Work / Health" />
-          </div>
-          <div class="field">
-            <label>Description</label>
-            <textarea data-field="description" rows="3" maxlength="500" placeholder="Optional"></textarea>
-          </div>
-        `;
+    <% } %>
 
-        const taskFields = `
-          <div class="field">
-            <label>Title</label>
-            <input data-field="title" type="text" maxlength="120" required />
-          </div>
-          <div class="field">
-            <label>Due Date</label>
-            <input data-field="date" type="date" required />
-          </div>
-          <div class="field">
-            <label>Priority</label>
-            <select data-field="priority" required>
-              <option value="LOW">Low</option>
-              <option value="MEDIUM" selected>Medium</option>
-              <option value="HIGH">High</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Description</label>
-            <textarea data-field="description" rows="3" maxlength="500" placeholder="Optional"></textarea>
-          </div>
-        `;
+</div>
 
-        return `
-          <div class="overlay" onclick="closeModal()">
-            <div class="modal" onclick="event.stopPropagation()">
-              <div class="modal-head">
-                <div>
-                  <div class="modal-title">${title} ${activeType === "EVENT" ? "Event" : "Task"}</div>
-                  <div class="modal-sub">${isEdit ? "Update details or delete" : "Create a new item on this day"}</div>
-                </div>
-                <button class="x" onclick="closeModal()" aria-label="Close">×</button>
-              </div>
 
-              <div class="tabs">
-                <button class="tab ${activeType === "EVENT" ? "active" : ""}" onclick="setModalType('EVENT')">Event</button>
-                <button class="tab ${activeType === "TASK" ? "active" : ""}" onclick="setModalType('TASK')">Task</button>
-              </div>
-
-              <div class="modal-body">
-                ${activeType === "EVENT" ? eventFields : taskFields}
-              </div>
-
-              <div class="modal-actions">
-                ${isEdit ? `<button class="btn btn-danger" onclick="deleteItem(${modal.editItemId})">Delete</button>` : `<div></div>`}
-                <div class="right">
-                  <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                  <button class="btn btn-primary" onclick="${isEdit ? "updateItemFromModal()" : "createItemFromModal()"}">${isEdit ? "Save" : "Add"}</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-    }
-
-    function render() {
-        document.getElementById("app-root").innerHTML = `
-          <div class="wrap">
-            ${renderTopbar()}
-            ${renderGrid()}
-            ${renderModal()}
-          </div>
-        `;
-    }
-
-    document.addEventListener("DOMContentLoaded", render);
-</script>
 </body>
+
 </html>
 

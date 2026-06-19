@@ -4,93 +4,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="<%=request.getContextPath()%>/css/habit_new_style.css">
-    <title>Create Habit</title>
-
-
+    <jsp:include page="/WEB-INF/views/includes/head.jsp"/>
+    <title>Create Habit • HabiTap</title>
 </head>
-<body>
-<div class="wrap">
-    <div class="header">
-        <div class="title">Create New Habit</div>
-        <div class="subtitle">Fill in details and save to database</div>
-    </div>
+<body class="bg-light">
+<jsp:include page="/WEB-INF/views/includes/navbar.jsp">
+    <jsp:param name="active" value="habits"/>
+</jsp:include>
 
-    <div class="card">
-        <%
-            String error = (String) request.getAttribute("error");
-            if (error != null) {
-        %>
-        <div class="error"><%= error %></div>
-        <%
-            }
-        %>
-
-        <%
-            List<Goal> goals = (List<Goal>) request.getAttribute("goals");
-            if (goals == null) goals = java.util.Collections.emptyList();
-        %>
-
-        <form method="POST" action="<%=request.getContextPath()%>/habits/new">
-            <div class="row">
-                <label>Habit Name</label>
-                <input type="text" name="name" required maxlength="50">
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-xl-6">
+            <div class="mb-4">
+                <h1 class="h3 fw-bold mb-1">Create New Habit</h1>
+                <p class="text-muted mb-0">Fill in details and save to database</p>
             </div>
 
-            <div class="row">
-                <label>Description</label>
-                <textarea name="description" rows="4" maxlength="500"></textarea>
-            </div>
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <%
+                        String error = (String) request.getAttribute("error");
+                        if (error != null) {
+                    %>
+                    <div class="alert alert-danger py-2" role="alert"><%= error %></div>
+                    <%
+                        }
 
-            <div class="row">
-                <label>Frequency</label>
-                <select name="frequency">
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                </select>
-            </div>
+                        List<Goal> goals = (List<Goal>) request.getAttribute("goals");
+                        if (goals == null) goals = java.util.Collections.emptyList();
+                    %>
 
-            <div class="row">
-                <label for="streak">Streak
-                    <input id="streak" name="streak" type="number" value="0">
-                </label>
-            </div>
+                    <form method="POST" action="<%=request.getContextPath()%>/habits/new">
+                        <div class="mb-3">
+                            <label class="form-label" for="name">Habit Name</label>
+                            <input class="form-control" type="text" id="name" name="name" required maxlength="50">
+                        </div>
 
-            <div class="row">
-                <label>Goal (optional)</label>
-                <select name="goalId">
-                    <option value="0">-- No Goal --</option>
-                    <% for (Goal g : goals) { %>
-                    <option value="<%=g.getId()%>"><%=g.getName()%></option>
-                    <% } %>
-                </select>
-            </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="description">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" maxlength="500"></textarea>
+                        </div>
 
-            <div class="actions">
-                <button class="btn btn-primary" type="submit">Create</button>
-                <a class="btn btn-secondary" href="<%=request.getContextPath()%>/habits">Cancel</a>
+                        <div class="mb-3">
+                            <label class="form-label" for="frequency">Frequency</label>
+                            <select class="form-select" id="frequency" name="frequency">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="streak">Streak</label>
+                            <input class="form-control" id="streak" name="streak" type="number" value="0">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label" for="goalId">Goal (optional)</label>
+                            <select class="form-select" id="goalId" name="goalId">
+                                <option value="0">-- No Goal --</option>
+                                <% for (Goal g : goals) { %>
+                                <option value="<%=g.getId()%>"><%=g.getName()%></option>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" type="submit">Create</button>
+                            <a class="btn btn-outline-secondary" href="<%=request.getContextPath()%>/habits">Cancel</a>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
-
-<script>
-    function decrementStreak() {
-        var input = document.getElementById('streak');
-        var value = parseInt(input.value);
-        if (value > 0) {
-            input.value = value - 1;
-        }
-    }
-
-    function incrementStreak() {
-        var input = document.getElementById('streak');
-        var value = parseInt(input.value);
-        input.value = value + 1;
-    }
-</script>
 </body>
 </html>

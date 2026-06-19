@@ -17,80 +17,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="<%=request.getContextPath()%>/css/habit_edit_style.css">
-    <title>Edit Habit</title>
-
-
+    <jsp:include page="/WEB-INF/views/includes/head.jsp"/>
+    <title>Edit Habit • HabiTap</title>
 </head>
+<body class="bg-light">
+<jsp:include page="/WEB-INF/views/includes/navbar.jsp">
+    <jsp:param name="active" value="habits"/>
+</jsp:include>
 
-<body>
-<div class="wrap">
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-xl-6">
+            <div class="mb-4">
+                <h1 class="h3 fw-bold mb-1">Edit Habit</h1>
+                <p class="text-muted mb-0">Update habit details and save changes</p>
+            </div>
 
-    <div class="header">
-        <div class="title">Edit Habit</div>
-        <div class="subtitle">Update habit details and save changes</div>
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <%
+                        if (error != null) {
+                    %>
+                    <div class="alert alert-danger py-2" role="alert"><%= error %></div>
+                    <%
+                        }
+                    %>
+
+                    <form method="post" action="<%=request.getContextPath()%>/habits/update">
+                        <input type="hidden" name="id" value="<%=habit.getId()%>"/>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="name">Habit Name</label>
+                            <input class="form-control" id="name" name="name" type="text" required maxlength="50"
+                                   value="<%=habit.getName()%>"/>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="description">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" maxlength="500"><%=habit.getDescription()%></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="frequency">Frequency</label>
+                            <select class="form-select" id="frequency" name="frequency" required>
+                                <option value="daily" <%= habit.getFrequency() != null && habit.getFrequency().name().equals("daily") ? "selected" : "" %>>Daily</option>
+                                <option value="weekly" <%= habit.getFrequency() != null && habit.getFrequency().name().equals("weekly") ? "selected" : "" %>>Weekly</option>
+                                <option value="monthly" <%= habit.getFrequency() != null && habit.getFrequency().name().equals("monthly") ? "selected" : "" %>>Monthly</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="streak">Streak</label>
+                            <input class="form-control" id="streak" name="streak" type="number" value="<%= habit.getStreak() %>">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label" for="goalId">Goal (optional)</label>
+                            <select class="form-select" id="goalId" name="goalId">
+                                <option value="0" <%= habit.getGoalId() == 0 ? "selected" : "" %>>-- No Goal --</option>
+                                <% for (Goal g : goals) { %>
+                                <option value="<%=g.getId()%>" <%= habit.getGoalId() != 0 && habit.getGoalId() == g.getId() ? "selected" : "" %>>
+                                    <%=g.getName()%>
+                                </option>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                            <a class="btn btn-outline-secondary" href="<%=request.getContextPath()%>/habits">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="card">
-
-        <%
-            if (error != null) {
-        %>
-        <div class="error"><%= error %></div>
-        <%
-            }
-        %>
-
-        <form method="post" action="<%=request.getContextPath()%>/habits/update">
-            <input type="hidden" name="id" value="<%=habit.getId()%>"/>
-
-            <div class="row">
-                <label for="name">Habit Name</label>
-                <input id="name" name="name" type="text" required maxlength="50"
-                       value="<%=habit.getName()%>"/>
-            </div>
-
-            <div class="row">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" rows="4" maxlength="500"><%=habit.getDescription()%></textarea>
-            </div>
-
-            <div class="row">
-                <label for="frequency">Frequency</label>
-                <select id="frequency" name="frequency" required>
-                    <option value="daily" <%= habit.getFrequency() != null && habit.getFrequency().name().equals("daily") ? "selected" : "" %>>Daily</option>
-                    <option value="weekly" <%= habit.getFrequency() != null && habit.getFrequency().name().equals("weekly") ? "selected" : "" %>>Weekly</option>
-                    <option value="monthly" <%= habit.getFrequency() != null && habit.getFrequency().name().equals("monthly") ? "selected" : "" %>>Monthly</option>
-                </select>
-            </div>
-
-            <div class="row">
-                <label for="streak">Streak
-                <input name="streak" type="number" value="<%= habit.getStreak() %>">
-                </label>
-            </div>
-
-            <div class="row">
-                <label for="goalId">Goal (optional)</label>
-                <select id="goalId" name="goalId">
-                    <option value="0" <%= habit.getGoalId() == 0 ? "selected" : "" %>>-- No Goal --</option>
-                    <% for (Goal g : goals) { %>
-                    <option value="<%=g.getId()%>" <%= habit.getGoalId() != 0 && habit.getGoalId() == g.getId() ? "selected" : "" %>>
-                        <%=g.getName()%>
-                    </option>
-                    <% } %>
-                </select>
-            </div>
-
-            <div class="actions">
-                <button type="submit" class="btn btn-primary">Save</button>
-                <a class="btn btn-secondary" href="<%=request.getContextPath()%>/habits">Cancel</a>
-            </div>
-        </form>
-    </div>
-
 </div>
 </body>
 </html>

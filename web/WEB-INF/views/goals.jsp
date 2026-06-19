@@ -4,47 +4,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="<%=request.getContextPath()%>/css/goals_style.css">
+    <jsp:include page="/WEB-INF/views/includes/head.jsp"/>
     <title>Goals • HabiTap</title>
 </head>
-<body>
+<body class="bg-light">
+<jsp:include page="/WEB-INF/views/includes/navbar.jsp">
+    <jsp:param name="active" value="goals"/>
+</jsp:include>
+
 <%
     List<Goal> goals = (List<Goal>) request.getAttribute("goals");
     if (goals == null) goals = java.util.Collections.emptyList();
 %>
 
-<div class="wrap">
-    <div class="topbar">
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
         <div>
-            <div class="title">Goals</div>
-            <div class="subtitle">Create goals and track their habit subtasks</div>
+            <h1 class="h3 fw-bold mb-1">Goals</h1>
+            <p class="text-muted mb-0">Create goals and track their habit subtasks</p>
         </div>
-        <div class="actions">
-            <a class="btn btn-secondary" href="<%=request.getContextPath()%>/habits">Habits</a>
-            <a class="btn btn-secondary" href="<%=request.getContextPath()%>/calendar">Calendar</a>
-            <a class="btn btn-primary" href="<%=request.getContextPath()%>/goals/new">Create Goal</a>
-            <a class="btn btn-ghost" href="<%=request.getContextPath()%>/logout">Logout</a>
-        </div>
+        <a class="btn btn-primary" href="<%=request.getContextPath()%>/goals/new">Create Goal</a>
     </div>
 
-    <div class="grid">
+    <div class="row g-3">
         <%
             if (goals.isEmpty()) {
         %>
-        <div class="empty">
-            No goals yet. Create one to group habits as subtasks.
+        <div class="col-12">
+            <div class="alert alert-secondary mb-0" role="alert">
+                No goals yet. Create one to group habits as subtasks.
+            </div>
         </div>
         <%
             } else {
                 for (Goal g : goals) {
         %>
-        <div class="card" onclick="location.href='<%=request.getContextPath()%>/goals/<%=g.getId()%>/habits'">
-            <div class="color" style="background:<%=g.getColor()%>"></div>
-            <div class="card-body">
-                <div class="card-title"><%=g.getName()%></div>
-                <div class="card-sub">Color: <span class="mono"><%=g.getColor()%></span></div>
+        <div class="col-sm-6 col-lg-4">
+            <div class="card goal-card-link shadow-sm h-100"
+                 onclick="location.href='<%=request.getContextPath()%>/goals/<%=g.getId()%>/habits'">
+                <div class="d-flex h-100">
+                    <div class="goal-color-bar" style="background:<%=g.getColor()%>"></div>
+                    <div class="card-body">
+                        <h2 class="h6 fw-bold mb-1"><%=g.getName()%></h2>
+                        <p class="text-muted small mb-0">Color: <code><%=g.getColor()%></code></p>
+                    </div>
+                </div>
             </div>
         </div>
         <%
@@ -55,4 +59,3 @@
 </div>
 </body>
 </html>
-
